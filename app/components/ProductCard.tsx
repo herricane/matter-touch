@@ -12,13 +12,22 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [hoverImageError, setHoverImageError] = useState(false)
+  const [shouldLoadHover, setShouldLoadHover] = useState(false)
   const hasHoverImage = product.hoverImageUrl && product.imageUrl && !hoverImageError
+
+  // 延迟加载悬停图片，只在鼠标接近时加载
+  const handleMouseEnter = () => {
+    setIsHovered(true)
+    if (product.hoverImageUrl && !shouldLoadHover) {
+      setShouldLoadHover(true)
+    }
+  }
 
   return (
     <div className="group cursor-pointer">
       <div
         className="relative w-full aspect-[3/4] bg-gray-100 mb-4 overflow-hidden"
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsHovered(false)}
       >
         {product.imageUrl ? (
@@ -29,21 +38,27 @@ export default function ProductCard({ product }: ProductCardProps) {
                 src={product.imageUrl}
                 alt={product.name}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className={`object-cover transition-opacity duration-500 ${
                   isHovered && hasHoverImage ? 'opacity-0' : 'opacity-100'
                 }`}
+                quality={75}
+                loading="lazy"
                 onError={() => setImageError(true)}
               />
             ) : null}
-            {/* 悬停图片（如果有） */}
-            {hasHoverImage && !hoverImageError && (
+            {/* 悬停图片（延迟加载） */}
+            {hasHoverImage && shouldLoadHover && !hoverImageError && (
               <Image
                 src={product.hoverImageUrl!}
                 alt={`${product.name} - 悬停视图`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className={`object-cover transition-opacity duration-500 ${
                   isHovered ? 'opacity-100' : 'opacity-0'
                 }`}
+                quality={75}
+                loading="lazy"
                 onError={() => setHoverImageError(true)}
               />
             )}
