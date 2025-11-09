@@ -245,13 +245,23 @@ npm run build
 
 # 11. 配置 Nginx
 info "🌐 配置 Nginx..."
-sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-sudo cp deployment/nginx-config.conf /etc/nginx/sites-available/matter-touch
-sudo sed -i "s/your-user/$USER/g" /etc/nginx/sites-available/matter-touch
-sudo sed -i "s/your_actual_domain.com/$DOMAIN/g" /etc/nginx/sites-available/matter-touch
-sudo ln -sf /etc/nginx/sites-available/matter-touch /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+# 在 RHEL/CentOS/Alibaba Cloud Linux 中，默认包含 /etc/nginx/conf.d/*.conf
+sudo mkdir -p /etc/nginx/conf.d
+sudo cp deployment/nginx-config.conf /etc/nginx/conf.d/matter-touch.conf
+sudo sed -i "s/your-user/$USER/g" /etc/nginx/conf.d/matter-touch.conf
+sudo sed -i "s/your-domain.com/$DOMAIN/g" /etc/nginx/conf.d/matter-touch.conf
+sudo sed -i "s/www\\.your-domain\\.com/www.$DOMAIN/g" /etc/nginx/conf.d/matter-touch.conf
 sudo nginx -t && sudo systemctl restart nginx
+
+# 11.1 开放防火墙端口（http/https）
+info "🧱 开放防火墙端口 http/https..."
+if command -v firewall-cmd &> /dev/null; then
+  sudo firewall-cmd --permanent --add-service=http || warn "开放 http 失败，请手动检查 firewalld"
+  sudo firewall-cmd --permanent --add-service=https || warn "开放 https 失败，请手动检查 firewalld"
+  sudo firewall-cmd --reload || warn "防火墙重载失败，请手动检查 firewalld"
+else
+  warn "未检测到 firewalld，跳过防火墙开放步骤"
+fi
 
 # 12. 配置 PM2
 info "🔧 配置 PM2..."
@@ -285,6 +295,13 @@ info "🔍 最终检查..."
 pm2 status
 sudo systemctl status nginx
 sudo systemctl status postgresql
+
+# 验证 80/443 监听与证书文件
+info "🔎 验证端口监听与证书文件..."
+sudo ss -ltnp | grep -E ':80|:443' || warn "未检测到 80/443 监听，请检查 Nginx 配置与证书"
+if [ -n "$DOMAIN" ]; then
+  sudo ls -l "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "/etc/letsencrypt/live/$DOMAIN/privkey.pem" || warn "未找到证书文件，请确认 Certbot 是否签发成功"
+fi
 
 info "🎉 部署完成！"
 echo ""
