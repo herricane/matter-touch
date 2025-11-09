@@ -35,7 +35,11 @@ fi
 
 if $DO_BUILD; then
   info "🏗️ 构建 Web 应用..."
-  npm ci
+  # 先尝试使用 npm ci（更快且可重复）
+  if ! npm ci --no-audit --no-fund; then
+    warn "npm ci 失败，可能是 package.json 与 package-lock.json 不一致，改用 npm install 同步锁文件..."
+    npm install --no-audit --no-fund
+  fi
   npm run build
 fi
 
