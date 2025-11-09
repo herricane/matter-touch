@@ -149,22 +149,43 @@ sudo systemctl enable postgresql
 # 配置 PostgreSQL
 info "🔧 配置 PostgreSQL..."
 read -p "请输入数据库密码: " DB_PASSWORD
-sudo -u postgres psql << EOF
-CREATE USER mattertouch WITH PASSWORD '$DB_PASSWORD';
-CREATE DATABASE matter_touch OWNER mattertouch;
-GRANT ALL PRIVILEGES ON DATABASE matter_touch TO mattertouch;
-\c matter_touch;
-GRANT ALL ON SCHEMA public TO mattertouch;
-ALTER SCHEMA public OWNER TO mattertouch;
-EOF
+
+# 切换到安全目录，避免 postgres 用户在当前目录出现权限问题
+pushd /tmp >/dev/null
+
+# 检查并创建数据库用户
+if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='mattertouch'" | grep -q 1; then
+    info "数据库用户 mattertouch 已存在，跳过创建"
+else
+    info "创建数据库用户 mattertouch..."
+    sudo -u postgres psql -c "CREATE USER mattertouch WITH PASSWORD '$DB_PASSWORD';"
+fi
+
+# 检查并创建数据库
+if sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='matter_touch'" | grep -q 1; then
+    info "数据库 matter_touch 已存在，跳过创建"
+else
+    info "创建数据库 matter_touch..."
+    sudo -u postgres psql -c "CREATE DATABASE matter_touch OWNER mattertouch;"
+fi
+
+# 授权与架构所有权（在目标数据库中执行）
+sudo -u postgres psql -d matter_touch -c "GRANT ALL ON SCHEMA public TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "ALTER SCHEMA public OWNER TO mattertouch;"
+
+popd >/dev/null
 
 # 7. 创建环境变量文件
 info "⚙️ 创建环境变量文件..."
 cp .env.production.example .env.production
-sed -i "s/your_secure_password/$DB_PASSWORD/g" .env.production
-sed -i "s/your-domain.com/$DOMAIN/g" .env.production
-sed -i "s/your-secure-jwt-secret/$(openssl rand -base64 32)/g" .env.production
-sed -i "s/your-secure-session-secret/$(openssl rand -base64 32)/g" .env.production
+JWT_SECRET=$(openssl rand -base64 32 | tr -d '\n')
+SESSION_SECRET=$(openssl rand -base64 32 | tr -d '\n')
+
+# 使用 | 作为 sed 分隔符，避免随机字符串中的 / 干扰
+sed -i "s|your_secure_password|$DB_PASSWORD|g" .env.production
+sed -i "s|your-domain.com|$DOMAIN|g" .env.production
+sed -i "s|your-secure-jwt-secret|$JWT_SECRET|g" .env.production
+sed -i "s|your-secure-session-secret|$SESSION_SECRET|g" .env.production
 
 # 为 Prisma CLI 提供环境文件（Prisma 默认读取 .env）
 if [ ! -f ".env" ]; then
