@@ -55,6 +55,12 @@ fi
 
 info "部署域名: $DOMAIN"
 
+# 尝试加载 nvm（如果存在），确保 node/npm 在当前会话 PATH 中
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+    info "检测到 nvm，加载 Node 环境..."
+    . "$HOME/.nvm/nvm.sh"
+fi
+
 # 1. 系统更新和基础安装（适配 Alibaba Cloud Linux 3）
 info "📦 系统更新和基础安装..."
 sudo yum update -y
@@ -87,14 +93,39 @@ else
     info "PostgreSQL 已安装"
 fi
 
-# 4. 安装其他工具
+# 4. 安装其他工具（在当前用户环境安装，避免 sudo 环境缺失 npm）
 info "🔧 安装其他工具..."
+
+# 统一获取 npm 二进制路径
+NPM_BIN=$(command -v npm || true)
+if [ -z "$NPM_BIN" ]; then
+    warn "未检测到 npm。若使用 nvm，请先加载: source \$HOME/.nvm/nvm.sh"
+fi
+
+# 安装 pm2（优先使用当前用户 npm，全局安装失败则回退使用 sudo 并保留 PATH）
 if ! command -v pm2 &> /dev/null; then
-    sudo npm install -g pm2
+    if [ -n "$NPM_BIN" ]; then
+        info "安装 pm2..."
+        "$NPM_BIN" install -g pm2 || sudo env "PATH=$PATH" "$NPM_BIN" install -g pm2
+    else
+        error "找不到 npm，无法安装 pm2。请确保 Node.js/npm 已可用后重试"
+    fi
+else
+    info "pm2 已安装"
 fi
+
+# 安装 tsx
 if ! command -v tsx &> /dev/null; then
-    sudo npm install -g tsx
+    if [ -n "$NPM_BIN" ]; then
+        info "安装 tsx..."
+        "$NPM_BIN" install -g tsx || sudo env "PATH=$PATH" "$NPM_BIN" install -g tsx
+    else
+        error "找不到 npm，无法安装 tsx。请确保 Node.js/npm 已可用后重试"
+    fi
+else
+    info "tsx 已安装"
 fi
+
 check_and_install "certbot" "sudo yum install -y certbot python3-certbot-nginx" "Certbot"
 
 # 5. 配置防火墙（使用 firewalld）
