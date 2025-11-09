@@ -21,13 +21,14 @@ export interface Product {
   hoverImageUrl?: string | null  // 悬停时的图片
   category: string
   // 商品详情页字段
-  colors?: string | null  // JSON数组
-  sizes?: string | null  // JSON数组
+  colors?: string | null  // JSON数组，格式: ["黑色", "白色", "灰色"]
+  sizes?: string | null  // JSON数组，格式: ["S", "M", "L", "XL"]
   composition?: string | null
   care?: string | null
-  galleryImages?: string | null  // JSON数组
-  detailTexts?: string | null  // JSON数组
-  detailImages?: string | null  // JSON数组
+  galleryImages?: string | null  // JSON数组，商品详情页的图片集合
+  detailTexts?: string | null  // JSON数组，商品详情页的文字描述，对应三张详情图
+  detailImages?: string | null  // JSON数组，商品详情页的三张详情图片
+  colorImages?: string | null  // JSON对象，格式: {"黑色": ["/path/to/image1.webp", "/path/to/image2.webp"], "白色": [...]}
   createdAt: Date
   updatedAt: Date
 }
