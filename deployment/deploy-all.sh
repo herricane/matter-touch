@@ -141,11 +141,11 @@ sudo firewall-cmd --reload
 info "🗄️ 初始化 PostgreSQL 数据库..."
 # 更稳健的初始化检查：优先判断 PG_VERSION，其次判断目录是否为空
 DATA_DIR="/var/lib/pgsql/data"
-if [ -d "$DATA_DIR" ]; then
-    if [ -f "$DATA_DIR/PG_VERSION" ]; then
+if sudo test -d "$DATA_DIR"; then
+    if sudo test -f "$DATA_DIR/PG_VERSION"; then
         info "检测到 PG_VERSION，数据库已初始化，跳过 initdb"
     else
-        if [ -z "$(ls -A "$DATA_DIR" 2>/dev/null)" ]; then
+        if sudo bash -lc "[ -z \"\$(ls -A \"$DATA_DIR\" 2>/dev/null)\" ]"; then
             info "数据目录存在且为空，执行初始化"
             sudo postgresql-setup --initdb --unit postgresql
         else
