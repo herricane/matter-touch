@@ -118,8 +118,8 @@ Content-Type: application/json
   "name": "产品名称",
   "description": "产品描述",
   "price": 1299.0,
-  "imageUrl": "/images/collections/clothings/products/product-1.jpg",
-  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover.jpg",
+  "imageUrl": "/images/collections/clothings/products/product-1.webp",
+  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover.webp",
   "category": "clothings"
 }
 ```
@@ -131,7 +131,7 @@ Content-Type: application/json
 
 {
   "price": 1499.0,
-  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover-new.jpg"
+  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover-new.webp"
 }
 ```
 
@@ -145,10 +145,10 @@ DELETE /api/products/{id}         # 删除产品
 
 ## 图片路径规则
 
-- **主视觉图片**：`public/images/hero/hero-{编号}.jpg`
-- **系列封面**：`public/images/collections/{系列slug}/cover.jpg`
-- **产品默认图片**：`/images/collections/{系列slug}/products/product-{编号}.jpg`
-- **产品悬停图片**：`/images/collections/{系列slug}/products/product-{编号}-hover.jpg`
+- **主视觉图片**：`public/images/hero/hero-{编号}.webp`
+- **系列封面**：`public/images/collections/{系列slug}/cover.webp`
+- **产品默认图片**：`/images/collections/{系列slug}/products/product-{编号}.webp`
+- **产品悬停图片**：`/images/collections/{系列slug}/products/product-{编号}-hover.webp`
 
 ## 部署
 

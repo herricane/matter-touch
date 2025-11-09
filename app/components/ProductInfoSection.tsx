@@ -11,6 +11,7 @@ interface ProductInfoSectionProps {
   colors: string[]
   sizes: string[]
   galleryImages: string[]
+  colorImagesMap?: Record<string, string[]>
 }
 
 export default function ProductInfoSection({
@@ -20,17 +21,18 @@ export default function ProductInfoSection({
   colors,
   sizes,
   galleryImages,
+  colorImagesMap,
 }: ProductInfoSectionProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
-  // 为每个颜色生成对应的图片（先用已有图片路径替代）
-  // 这里可以根据实际需求，为每个颜色分配不同的图片
-  const colorImages: Record<string, string[]> = {}
-  colors.forEach((color) => {
-    // 为每个颜色使用相同的图片（先用已有图片替代）
-    // 后续可以根据实际需求，为每个颜色配置不同的图片
-    colorImages[color] = galleryImages.length > 0 ? galleryImages : []
-  })
+  // 使用传入的颜色图片映射，如果没有则使用默认逻辑（所有颜色使用相同的 galleryImages）
+  const colorImages: Record<string, string[]> = colorImagesMap || (() => {
+    const defaultMap: Record<string, string[]> = {}
+    colors.forEach((color) => {
+      defaultMap[color] = galleryImages.length > 0 ? galleryImages : []
+    })
+    return defaultMap
+  })()
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">

@@ -31,6 +31,11 @@ export default async function ProductPage({ params }: PageProps) {
     : []
   const detailImages = product.detailImages ? JSON.parse(product.detailImages) : []
   const detailTexts = product.detailTexts ? JSON.parse(product.detailTexts) : []
+  
+  // 从数据库读取颜色图片映射
+  const colorImagesMap = product.colorImages
+    ? JSON.parse(product.colorImages)
+    : {}
 
   // 格式化价格
   const formattedPrice = product.price
@@ -51,6 +56,7 @@ export default async function ProductPage({ params }: PageProps) {
             colors={colors}
             sizes={sizes}
             galleryImages={galleryImages}
+            colorImagesMap={colorImagesMap}
           />
         </div>
       </section>

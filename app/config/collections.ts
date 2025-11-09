@@ -4,12 +4,12 @@ export const collections: Collection[] = [
   {
     name: '成衣',
     slug: 'clothings',
-    coverImageUrl: '/images/collections/clothings/cover.jpg',
+    coverImageUrl: '/images/collections/clothings/cover.webp',
   },
   {
     name: '配饰',
     slug: 'accessories',
-    coverImageUrl: '/images/collections/accessories/cover.jpg',
+    coverImageUrl: '/images/collections/accessories/cover.webp',
   },
 ]
 

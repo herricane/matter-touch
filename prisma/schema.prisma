@@ -26,6 +26,7 @@ model Product {
   galleryImages String?  // JSON数组，商品详情页的图片集合
   detailTexts   String?  // JSON数组，商品详情页的文字描述，对应三张详情图
   detailImages  String?  // JSON数组，商品详情页的三张详情图片
+  colorImages   String?  // JSON对象，格式: {"黑色": ["/path/to/image1.webp", "/path/to/image2.webp"], "白色": [...]}
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
