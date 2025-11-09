@@ -1,293 +1,105 @@
-# 🚀 阿里云 ECS 部署完整指南
+# 🚀 部署简明指南（Deployment README）
 
-## 📋 部署概述
+本文件整合了所有部署说明，保留最核心的脚本与配置，帮助你在阿里云 ECS（或任意 RHEL/CentOS 系）快速上线。
 
-本指南将帮助你将 Next.js + PostgreSQL + Prisma 项目从本地开发环境部署到阿里云 ECS 生产环境。
+## 目录结构（保留项）
+- `deployment/deploy-all.sh` 一键完整部署脚本（核心）
+- `deployment/nginx-config.conf` Nginx 反向代理配置模板
+- `deployment/pm2-manager.sh` PM2 管理辅助脚本
 
-## 🎯 快速开始（推荐）
+其余文档与冗余脚本已移除，说明合并于本文档。
 
-### 一键部署
-```bash
-# 1. 克隆项目到 ECS
-git clone <your-repo-url> matter-touch
-cd matter-touch
+## 使用场景与用法
+- 全新服务器部署（推荐）
+  - 适用：首次在 ECS 上线，或环境损坏需要重建
+  - 用法：
+    ```bash
+    chmod +x deployment/*.sh
+    ./deployment/deploy-all.sh your-domain.com
+    ```
+- 半途失败后继续部署
+  - 适用：上次执行中断（比如网络/证书问题），再次运行自动跳过已完成步骤
+  - 用法：
+    ```bash
+    ./deployment/deploy-all.sh your-domain.com
+    ```
+- 管理与排障（PM2/Nginx）
+  - 用法：
+    ```bash
+    # PM2 管理
+    ./deployment/pm2-manager.sh status
+    ./deployment/pm2-manager.sh logs
+    ./deployment/pm2-manager.sh restart
 
-# 2. 给脚本执行权限
-chmod +x deployment/*.sh
+    # 检查 Nginx 与端口监听
+    sudo nginx -t && sudo systemctl restart nginx
+    sudo ss -ltnp | grep -E ':80|:443'
+    ```
 
-# 3. 执行一键部署（替换 your-domain.com 为你的域名）
-./deployment/deploy-all.sh your-domain.com
-```
+- 快速刷新（代码或数据库更新后）
+  - 用法：
+    ```bash
+    # 仅重载 PM2 与 Nginx
+    ./deployment/refresh.sh
 
-部署脚本会在数据库迁移后自动执行 Prisma 初始化脚本（`prisma/init.ts`），仅在数据库为空时创建初始条目。
+    # 应用最新数据库迁移（Prisma）后重载
+    ./deployment/refresh.sh --migrate
 
-## 🔧 分步部署
+    # 重新安装依赖并构建后重载（适合前端代码更新）
+    ./deployment/refresh.sh --build
 
-### 步骤 1: 系统准备
-```bash
-# 更新系统
-sudo yum update -y
+    # 组合使用（数据库迁移 + 构建 + 重载）
+    ./deployment/refresh.sh --migrate --build
+    ```
 
-# 安装基础软件
-sudo yum install -y curl wget git vim nginx gcc make firewalld
-```
+## 环境前提
+- 系统：Alibaba Cloud Linux/CentOS/RHEL（yum 系统）
+- 用户：非 root 用户执行脚本（脚本中使用 sudo）
+- 端口：安全组与防火墙放行 `80/443`
+- 域名：解析到 ECS 公网 IP，脚本会申请并配置 SSL
 
-### 1. 系统要求
-- **操作系统**: Alibaba Cloud Linux 3.2104 LTS 64位 (推荐)
-- **CPU**: 2核+
-- **内存**: 4GB+
-- **存储**: 50GB+ SSD
+## 一键部署会做什么
+- 安装 Node.js、Nginx、PostgreSQL、PM2、Certbot（按需）
+- 自动配置 PostgreSQL（pg_hba、密码算法、用户密码与权限、data 目录检测）
+- 同步 Prisma Schema：有迁移文件则 `migrate deploy`，否则自动 `db push`
+- 生成 Prisma 客户端并初始化数据（存在性检查，避免 P2021）
+- 构建 Next.js，配置 Nginx 到 `conf.d` 并开放防火墙 `http/https`
+- 配置 PM2 自启动（注入 Node PATH；失败不阻塞）
+- 验证端口监听与证书文件存在性
 
-### 步骤 2: 环境配置
-按照以下顺序执行脚本：
+## 常用检查与排障
+- 数据库
+  ```bash
+  sudo -u postgres psql -d matter_touch -c "\\dt '"Product"'""
+  sudo -u postgres psql -d matter_touch -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='Product');"
+  ```
+- 端口与服务
+  ```bash
+  pm2 status
+  sudo systemctl status nginx postgresql
+  sudo ss -ltnp | grep -E ':80|:443'
+  ```
+- 证书
+  ```bash
+  sudo ls -l /etc/letsencrypt/live/your-domain.com/{fullchain.pem,privkey.pem}
+  ```
 
-1. **系统环境配置**: `./deployment/ecs-setup.md`
-2. **数据库配置**: `./deployment/setup-postgresql.sh`
-3. **Nginx 配置**: `./deployment/setup-nginx.sh`
-4. **应用部署**: `./deployment/deploy.sh`
-5. **PM2 配置**: `./deployment/setup-pm2.sh`
-6. **SSL 配置**: `./deployment/setup-ssl.sh your-domain.com`
+## Nginx 配置模板说明（`deployment/nginx-config.conf`）
+- 脚本会自动替换 `your-domain.com` 与 `your-user`，并安装到 `/etc/nginx/conf.d/matter-touch.conf`
+- 统一通过 `127.0.0.1:3000` 代理到应用，避免 IPv6 解析造成的 502
+- 已移除本地 alias，静态资源由上游 Next.js 提供，避免路径不一致导致样式缺失
 
-### Prisma 数据初始化（可选手动执行）
-如果你未使用一键部署或需要手动初始化生产环境的初始数据，可执行：
-```bash
-npm run db:init
-```
-说明：该脚本会检测数据库中是否已有产品数据，若已有则跳过，不会覆盖现有数据。
+## 注意事项
+- `.env.production` 会由脚本生成并同步到 `.env`；确保 `DATABASE_URL` 指向 `matter_touch` 数据库且用户为 `mattertouch`
+- 首次部署可能因证书签发导致 Nginx 重启后短暂无 443 监听；修复后再执行脚本可自动恢复
+- 若使用 nvm，脚本会尝试加载；`pm2 startup` 已通过 sudo 注入 Node PATH；失败不阻塞，可按提示手工执行
 
-## 📁 部署文件说明
+## 需要你做的最少操作
+- 克隆代码，准备域名解析到 ECS
+- 执行：`./deployment/deploy-all.sh your-domain.com`
+- 打开浏览器访问你的域名
 
-### 配置文件
-- `.env.production.example` - 生产环境变量模板
-- `ecosystem.config.js` - PM2 进程管理配置
-- `deployment/nginx-config.conf` - Nginx 反向代理配置
-
-### 部署脚本
-- `deployment/deploy-all.sh` - 一键完整部署
-- `deployment/setup-postgresql.sh` - PostgreSQL 配置
-- `deployment/setup-nginx.sh` - Nginx 配置
-- `deployment/deploy.sh` - 应用部署
-- `deployment/setup-pm2.sh` - PM2 配置
-- `deployment/setup-ssl.sh` - SSL 证书配置
-- `deployment/pm2-manager.sh` - PM2 管理工具
-
-### 文档
-- `deployment/ecs-setup.md` - ECS 环境配置清单
-- `deployment/database-config.md` - 数据库配置指南
-- `deployment/ssl-config.md` - SSL 证书配置指南
-
-## 🚀 部署后操作
-
-### 1. 验证部署
-```bash
-# 检查应用状态
-pm2 status
-
-# 检查服务状态
-sudo systemctl status nginx
-sudo systemctl status postgresql
-
-# 测试网站
-curl -I https://your-domain.com
-```
-
-### 2. 管理应用
-```bash
-# 使用管理脚本
-./deployment/pm2-manager.sh status
-./deployment/pm2-manager.sh logs
-./deployment/pm2-manager.sh restart
-
-# 或者直接使用 PM2 命令
-pm2 status
-pm2 logs matter-touch
-pm2 restart matter-touch
-```
-
-### 3. 备份和监控
-```bash
-# 手动备份数据库
-~/backups/postgresql/backup.sh
-
-# 查看定时任务
-crontab -l
-
-# 查看系统日志
-sudo journalctl -f
-```
-
-## 🔒 安全配置
-
-### 1. 防火墙规则
-```bash
-# 查看防火墙状态
-sudo firewall-cmd --state
-
-# 只允许必要的端口
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
-```
-
-### 2. 数据库安全
-- 使用强密码
-- 限制数据库访问权限
-- 定期备份数据
-- 监控数据库连接
-
-### 3. SSL/TLS 配置
-- 使用强加密算法
-- 启用 HSTS
-- 配置自动续期
-- 定期更新证书
-
-## 🐛 故障排除
-
-### 常见问题
-
-1. **应用无法启动**
-   ```bash
-   # 查看 PM2 日志
-   pm2 logs matter-touch
-   
-   # 检查环境变量
-   cat .env.production
-   
-   # 检查端口占用
-   sudo netstat -tlnp | grep :3000
-   ```
-
-2. **Nginx 配置错误**
-   ```bash
-   # 测试配置
-   sudo nginx -t
-   
-   # 查看错误日志
-   sudo tail -f /var/log/nginx/error.log
-   ```
-
-3. **数据库连接失败**
-   ```bash
-   # 检查 PostgreSQL 状态
-   sudo systemctl status postgresql
-
-   # 检查连接字符串
-   grep DATABASE_URL .env.production
-
-   # 测试连接
-   psql $DATABASE_URL -c "SELECT version();"
-   ```
-
-4. **SSL 证书问题**
-   ```bash
-   # 检查证书状态
-   sudo certbot certificates
-   
-   # 手动续期测试
-   sudo certbot renew --dry-run
-   
-   # 查看 Certbot 日志
-   sudo tail -f /var/log/letsencrypt/letsencrypt.log
-   ```
-
-## 📊 性能优化
-
-### 1. 应用优化
-- 启用 Next.js 生产模式
-- 使用 PM2 集群模式
-- 配置适当的内存限制
-- 监控内存使用情况
-
-### 2. 数据库优化
-- 创建适当的索引
-- 配置连接池
-- 定期清理日志
-- 监控查询性能
-
-### 3. Nginx 优化
-- 启用 Gzip 压缩
-- 配置静态资源缓存
-- 优化代理设置
-- 监控访问日志
-
-## 🔍 监控和维护
-
-### 1. 系统监控
-```bash
-# 查看系统资源
-htop
-
-# 查看磁盘使用
-df -h
-
-# 查看内存使用
-free -h
-```
-
-### 2. 应用监控
-```bash
-# PM2 监控面板
-pm2 monit
-
-# 查看应用日志
-pm2 logs matter-touch --lines 50
-
-# 查看进程信息
-pm2 info matter-touch
-```
-
-### 3. 定期维护
-- 更新系统包：`sudo yum update`
-- 更新 Node.js：使用 NodeSource
-- 备份数据库：自动备份已配置
-- 清理日志：定期清理应用和系统日志
-
-## 🆘 紧急恢复
-
-### 1. 应用崩溃
-```bash
-# 重启应用
-pm2 restart matter-touch
-
-# 如果 PM2 无法工作
-pm2 kill
-pm2 start ecosystem.config.js --env production
-```
-
-### 2. 数据库恢复
-```bash
-# 从备份恢复（找到最新的备份文件）
-LATEST_BACKUP=$(ls -t ~/backups/postgresql/*.sql | head -1)
-psql $DATABASE_URL < $LATEST_BACKUP
-```
-
-### 3. 完整重启
-```bash
-# 重启所有服务
-sudo systemctl restart postgresql
-pm2 restart matter-touch
-sudo systemctl restart nginx
-```
-
-## 📞 技术支持
-
-如果遇到问题，请按以下顺序检查：
-1. 查看应用日志：`pm2 logs matter-touch`
-2. 查看系统日志：`sudo journalctl -f`
-3. 检查配置文件语法
-4. 验证网络连接
-5. 查看本指南的故障排除部分
-
-## 🎉 部署完成！
-
-恭喜你！🎊 你的 Next.js 应用已经成功部署到阿里云 ECS 生产环境。
-
-### 下一步建议：
-1. 配置域名解析到你的 ECS 公网 IP
-2. 测试所有功能是否正常工作
-3. 设置监控告警
-4. 定期备份和维护
-5. 考虑使用 CDN 加速静态资源
-
-祝你的应用运行顺利！🚀
+若仍遇到问题，请收集以下输出反馈：
+- `sudo nginx -t` 与 `/var/log/nginx/matter-touch-error.log` 最近 50 行
+- `pm2 logs matter-touch --lines 200`
+- `sudo ss -ltnp | grep -E ':80|:443'`

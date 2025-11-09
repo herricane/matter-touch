@@ -272,9 +272,18 @@ sudo certbot certonly --standalone \
     -d $DOMAIN \
     -d www.$DOMAIN
 
-# 更新 Nginx SSL 配置
-sudo sed -i "/listen 443 ssl http2;/a\\    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;" /etc/nginx/sites-available/matter-touch
-sudo sed -i "/ssl_certificate.*fullchain.pem;/a\\    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;" /etc/nginx/sites-available/matter-touch
+# 更新 Nginx SSL 配置（统一到 conf.d 路径，避免重复插入）
+CONF_FILE="/etc/nginx/conf.d/matter-touch.conf"
+if ! sudo grep -q "ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;" "$CONF_FILE"; then
+    sudo sed -i "/listen 443 ssl http2;/a\\    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;" "$CONF_FILE"
+else
+    info "已检测到 ssl_certificate 配置，跳过重复插入"
+fi
+if ! sudo grep -q "ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;" "$CONF_FILE"; then
+    sudo sed -i "/ssl_certificate.*fullchain.pem;/a\\    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;" "$CONF_FILE"
+else
+    info "已检测到 ssl_certificate_key 配置，跳过重复插入"
+fi
 sudo nginx -t && sudo systemctl restart nginx
 
 # 14. 设置自动续期
