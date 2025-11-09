@@ -59,7 +59,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-2xl font-light tracking-wide mb-4 text-black">5. 免责声明</h2>
               <p className="text-base font-light leading-relaxed text-gray-800">
-                本网站按"现状"和"可用"的基础提供。
+                本网站按&quot;现状&quot;和&quot;可用&quot;的基础提供。
                 我们不保证网站将始终可用、不间断、安全或无错误。
                 在法律允许的最大范围内，我们不对因使用或无法使用本网站而产生的任何直接、间接、偶然或后果性损害承担责任。
               </p>
@@ -115,7 +115,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-light tracking-wide mb-4 text-black">11. 条款变更</h2>
               <p className="text-base font-light leading-relaxed text-gray-800">
                 我们保留随时修改本使用条款的权利。
-                任何变更将在本页面上发布，并更新"最后更新日期"。
+                任何变更将在本页面上发布，并更新&quot;最后更新日期&quot;。
                 您继续使用本网站即表示您接受修改后的条款。
               </p>
             </section>

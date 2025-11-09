@@ -93,7 +93,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-2xl font-light tracking-wide mb-4 text-black">8. 政策变更</h2>
               <p className="text-base font-light leading-relaxed text-gray-800">
-                我们保留随时修改本隐私政策的权利。任何变更将在本页面上发布，并更新"最后更新日期"。
+                我们保留随时修改本隐私政策的权利。任何变更将在本页面上发布，并更新&quot;最后更新日期&quot;。
                 我们建议您定期查看本政策以了解任何变更。
               </p>
             </section>

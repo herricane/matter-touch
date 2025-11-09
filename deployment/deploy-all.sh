@@ -182,24 +182,16 @@ else
     sudo -u postgres psql -c "CREATE DATABASE matter_touch OWNER mattertouch;"
 fi
 
-# 确保用户密码与数据库权限
-info "同步用户密码并授予数据库权限..."
+# 确保用户密码与基本所有权
+info "同步用户密码并设置基本所有权..."
 # 处理密码中的单引号，避免 SQL 语法错误
 DB_PASSWORD_ESCAPED=$(printf "%s" "$DB_PASSWORD" | sed "s/'/''/g")
 sudo -u postgres psql -c "ALTER USER mattertouch WITH PASSWORD '$DB_PASSWORD_ESCAPED';"
 sudo -u postgres psql -c "ALTER DATABASE matter_touch OWNER TO mattertouch;"
-sudo -u postgres psql -c "GRANT CONNECT, CREATE, TEMP ON DATABASE matter_touch TO mattertouch;"
+sudo -u postgres psql -c "GRANT CONNECT ON DATABASE matter_touch TO mattertouch;"
 
-# 授权与架构所有权（在目标数据库中执行）
-sudo -u postgres psql -d matter_touch -c "GRANT USAGE, CREATE ON SCHEMA public TO mattertouch;"
+# 架构所有权与 search_path 设置（Prisma 需要在 public 架构下创建对象）
 sudo -u postgres psql -d matter_touch -c "ALTER SCHEMA public OWNER TO mattertouch;"
-
-# 为现有对象与未来对象授予权限，并设置 search_path
-sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mattertouch;"
-sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mattertouch;"
-sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO mattertouch;"
-sudo -u postgres psql -d matter_touch -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO mattertouch;"
-sudo -u postgres psql -d matter_touch -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO mattertouch;"
 sudo -u postgres psql -c "ALTER ROLE mattertouch SET search_path = public;"
 
 popd >/dev/null
@@ -230,10 +222,20 @@ npm ci
 
 # 9. 数据库迁移
 info "🔄 数据库迁移..."
-npx prisma migrate deploy
+
+# 如果存在迁移目录且包含至少一个迁移文件夹，则执行 migrate deploy；否则执行 db push
+if [ -d "prisma/migrations" ] && [ "$(find prisma/migrations -mindepth 1 -maxdepth 1 -type d | wc -l | xargs)" != "0" ]; then
+    info "检测到迁移目录，执行 prisma migrate deploy"
+    npx prisma migrate deploy || error "prisma migrate deploy 执行失败"
+else
+    warn "未发现迁移目录，改为执行 prisma db push 以创建数据库结构"
+    npx prisma db push || error "prisma db push 执行失败"
+fi
+
+# 生成 Prisma 客户端
 npx prisma generate
 
-# 9.5 数据库初始化（仅在数据库为空时执行）
+# 9.5 数据库初始化
 info "🌱 使用 Prisma 初始化数据库初始数据..."
 npm run db:init || warn "Prisma 初始化脚本执行失败，请检查数据库连接与日志"
 
