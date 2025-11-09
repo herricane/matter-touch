@@ -245,6 +245,7 @@ npm run build
 
 # 11. 配置 Nginx
 info "🌐 配置 Nginx..."
+sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
 sudo cp deployment/nginx-config.conf /etc/nginx/sites-available/matter-touch
 sudo sed -i "s/your-user/$USER/g" /etc/nginx/sites-available/matter-touch
 sudo sed -i "s/your_actual_domain.com/$DOMAIN/g" /etc/nginx/sites-available/matter-touch
