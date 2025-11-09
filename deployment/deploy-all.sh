@@ -258,7 +258,9 @@ info "🔧 配置 PM2..."
 mkdir -p logs
 pm2 start ecosystem.config.js --env production
 pm2 save
-pm2 startup systemd -u $USER --hp $HOME
+# 以 root 执行 pm2 startup，并传递当前 Node 的 bin 路径到 PATH，避免 nvm 环境丢失
+NODE_BIN_DIR=$(dirname "$(command -v node)")
+sudo env "PATH=$PATH:$NODE_BIN_DIR" pm2 startup systemd -u "$USER" --hp "$HOME" || warn "pm2 startup 非关键步骤失败，已跳过，后续可手动执行上述命令"
 
 # 13. 配置 SSL 证书
 info "🔒 配置 SSL 证书..."
@@ -278,21 +280,7 @@ sudo nginx -t && sudo systemctl restart nginx
 # 14. 设置自动续期
 echo "0 2 * * * /usr/bin/certbot renew --quiet --post-hook 'systemctl reload nginx'" | sudo tee -a /etc/crontab
 
-# 15. 创建备份脚本
-info "💾 创建备份脚本..."
-mkdir -p ~/backups/postgresql
-cat > ~/backups/postgresql/backup.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="/home/$(whoami)/backups/postgresql"
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="$BACKUP_DIR/matter_touch_backup_$DATE.sql"
-sudo -u postgres pg_dump matter_touch > "$BACKUP_FILE"
-find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
-EOF
-chmod +x ~/backups/postgresql/backup.sh
-echo "0 2 * * * ~/backups/postgresql/backup.sh" | crontab -
-
-# 16. 最终检查
+# 15. 最终检查
 info "🔍 最终检查..."
 pm2 status
 sudo systemctl status nginx
@@ -310,7 +298,6 @@ echo "🔧 常用命令："
 echo "   重启应用: pm2 restart matter-touch"
 echo "   查看状态: pm2 status"
 echo "   查看日志: pm2 logs"
-echo "   备份数据库: ~/backups/postgresql/backup.sh"
 echo ""
 echo "⚠️  重要提醒："
 echo "   1. 请妥善保存 .env.production 文件"
