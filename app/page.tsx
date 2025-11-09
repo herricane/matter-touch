@@ -19,10 +19,10 @@ export default function Home() {
       <section id="collections" className="py-24 px-6 sm:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-extralight tracking-wider mb-4 text-black">
+            <h2 className="text-4xl md:text-5xl font-extralight tracking-wider mb-12 text-black">
               系列
             </h2>
-            <div className="w-24 h-px bg-black mx-auto"></div>
+            <div className="w-24 h-px bg-black mx-auto mb-12"></div>
           </div>
 
           {/* 系列网格 - 从静态配置读取 */}
