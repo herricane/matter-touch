@@ -253,16 +253,6 @@ sudo sed -i "s/your-domain.com/$DOMAIN/g" /etc/nginx/conf.d/matter-touch.conf
 sudo sed -i "s/www\\.your-domain\\.com/www.$DOMAIN/g" /etc/nginx/conf.d/matter-touch.conf
 sudo nginx -t && sudo systemctl restart nginx
 
-# 11.1 开放防火墙端口（http/https）
-info "🧱 开放防火墙端口 http/https..."
-if command -v firewall-cmd &> /dev/null; then
-  sudo firewall-cmd --permanent --add-service=http || warn "开放 http 失败，请手动检查 firewalld"
-  sudo firewall-cmd --permanent --add-service=https || warn "开放 https 失败，请手动检查 firewalld"
-  sudo firewall-cmd --reload || warn "防火墙重载失败，请手动检查 firewalld"
-else
-  warn "未检测到 firewalld，跳过防火墙开放步骤"
-fi
-
 # 12. 配置 PM2
 info "🔧 配置 PM2..."
 mkdir -p logs
