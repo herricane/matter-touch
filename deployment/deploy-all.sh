@@ -139,9 +139,22 @@ sudo firewall-cmd --reload
 
 # 6. 初始化 PostgreSQL 数据库
 info "🗄️ 初始化 PostgreSQL 数据库..."
-# 检查是否已初始化
-if [ ! -f "/var/lib/pgsql/data/postgresql.conf" ]; then
-    sudo postgresql-setup initdb
+# 更稳健的初始化检查：优先判断 PG_VERSION，其次判断目录是否为空
+DATA_DIR="/var/lib/pgsql/data"
+if [ -d "$DATA_DIR" ]; then
+    if [ -f "$DATA_DIR/PG_VERSION" ]; then
+        info "检测到 PG_VERSION，数据库已初始化，跳过 initdb"
+    else
+        if [ -z "$(ls -A "$DATA_DIR" 2>/dev/null)" ]; then
+            info "数据目录存在且为空，执行初始化"
+            sudo postgresql-setup --initdb --unit postgresql
+        else
+            warn "数据目录非空，跳过初始化。如需重新初始化，请先清理 $DATA_DIR"
+        fi
+    fi
+else
+    info "数据目录不存在，执行初始化"
+    sudo postgresql-setup --initdb --unit postgresql
 fi
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
@@ -169,8 +182,14 @@ else
     sudo -u postgres psql -c "CREATE DATABASE matter_touch OWNER mattertouch;"
 fi
 
+# 确保用户密码与数据库权限
+info "同步用户密码并授予数据库权限..."
+sudo -u postgres psql -c "ALTER USER mattertouch WITH PASSWORD '$DB_PASSWORD';"
+sudo -u postgres psql -c "ALTER DATABASE matter_touch OWNER TO mattertouch;"
+sudo -u postgres psql -c "GRANT CONNECT, CREATE, TEMP ON DATABASE matter_touch TO mattertouch;"
+
 # 授权与架构所有权（在目标数据库中执行）
-sudo -u postgres psql -d matter_touch -c "GRANT ALL ON SCHEMA public TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "GRANT USAGE, CREATE ON SCHEMA public TO mattertouch;"
 sudo -u postgres psql -d matter_touch -c "ALTER SCHEMA public OWNER TO mattertouch;"
 
 popd >/dev/null
