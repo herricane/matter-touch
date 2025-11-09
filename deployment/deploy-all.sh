@@ -184,13 +184,23 @@ fi
 
 # 确保用户密码与数据库权限
 info "同步用户密码并授予数据库权限..."
-sudo -u postgres psql -c "ALTER USER mattertouch WITH PASSWORD '$DB_PASSWORD';"
+# 处理密码中的单引号，避免 SQL 语法错误
+DB_PASSWORD_ESCAPED=$(printf "%s" "$DB_PASSWORD" | sed "s/'/''/g")
+sudo -u postgres psql -c "ALTER USER mattertouch WITH PASSWORD '$DB_PASSWORD_ESCAPED';"
 sudo -u postgres psql -c "ALTER DATABASE matter_touch OWNER TO mattertouch;"
 sudo -u postgres psql -c "GRANT CONNECT, CREATE, TEMP ON DATABASE matter_touch TO mattertouch;"
 
 # 授权与架构所有权（在目标数据库中执行）
 sudo -u postgres psql -d matter_touch -c "GRANT USAGE, CREATE ON SCHEMA public TO mattertouch;"
 sudo -u postgres psql -d matter_touch -c "ALTER SCHEMA public OWNER TO mattertouch;"
+
+# 为现有对象与未来对象授予权限，并设置 search_path
+sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO mattertouch;"
+sudo -u postgres psql -d matter_touch -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO mattertouch;"
+sudo -u postgres psql -c "ALTER ROLE mattertouch SET search_path = public;"
 
 popd >/dev/null
 
