@@ -20,6 +20,14 @@ export interface Product {
   imageUrl?: string | null
   hoverImageUrl?: string | null  // 悬停时的图片
   category: string
+  // 商品详情页字段
+  colors?: string | null  // JSON数组
+  sizes?: string | null  // JSON数组
+  composition?: string | null
+  care?: string | null
+  galleryImages?: string | null  // JSON数组
+  detailTexts?: string | null  // JSON数组
+  detailImages?: string | null  // JSON数组
   createdAt: Date
   updatedAt: Date
 }

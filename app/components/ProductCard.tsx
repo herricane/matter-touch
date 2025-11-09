@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useState } from 'react'
 import type { Product } from '../types'
 
@@ -24,7 +25,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <div className="group cursor-pointer">
+    <Link href={`/products/${product.id}`} className="group cursor-pointer block">
       <div
         className="relative w-full aspect-[3/4] bg-gray-100 mb-4 overflow-hidden"
         onMouseEnter={handleMouseEnter}
@@ -80,7 +81,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
       </div>
-    </div>
+    </Link>
   )
 }
 
