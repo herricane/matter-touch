@@ -4,11 +4,26 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createClient() {
+  const client = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query'] : [],
   })
+  // 动态启用 Prisma Accelerate（如设置了 PRISMA_ACCELERATE_URL）
+  // 以便在 Vercel Serverless 环境下获得更稳的连接表现
+  try {
+    // 按需引入，避免本地没有依赖时报错
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { withAccelerate } = require('@prisma/extension-accelerate')
+    if (process.env.PRISMA_ACCELERATE_URL) {
+      return client.$extends(withAccelerate())
+    }
+  } catch (e) {
+    // ignore when accelerate is not installed
+  }
+  return client
+}
+
+export const prisma = globalForPrisma.prisma ?? createClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 

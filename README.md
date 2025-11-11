@@ -12,165 +12,117 @@ npm install
 
 ### 2. 配置环境变量
 
-创建 `.env` 文件：
-
+**本地开发：**
 ```bash
-DATABASE_URL="postgresql://mattertouch:mattertouch123@localhost:5432/matter_touch?schema=public"
+# 复制示例文件并重命名为 .env.local（不会被 git 跟踪）
+cp .env.local.example .env.local
+
+# 然后编辑 .env.local，填入你的实际配置
+# DATABASE_URL="postgresql://user:pass@localhost:5432/matter_touch?schema=public"
+# SUPABASE_URL="https://xxxxx.supabase.co"  # 可选
+# SUPABASE_SERVICE_ROLE="service-role-key"  # 可选
 ```
 
-### 3. 启动 PostgreSQL
+**生产环境（Vercel）：**
+- 在 Vercel 项目 Settings → Environment Variables 中配置
+- 参考 `.env.production.example` 中的变量列表
 
-```bash
-# 使用 Homebrew
-brew services start postgresql@14
-
-# 或使用脚本
-./scripts/postgres.sh start
-```
-
-### 4. 初始化数据库
+### 3. 初始化数据库（本地）
 
 ```bash
 npm run db:generate
 npm run db:push -- --accept-data-loss
 npm run db:seed  # 开发环境（会清空数据）
 # 或
-npm run db:init  # 生产环境（不会清空数据）
+npm run db:init  # 生产初始化（不会清空数据）
 ```
 
-### 5. 启动开发服务器
+### 4. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)
+访问 http://localhost:3000
+
+## 数据管理
+
+- 主视觉图片：`app/config/heroImages.ts`
+- 系列信息：`app/config/collections.ts`
+- 产品数据在数据库（Prisma + Postgres）。图片字段可存相对路径（本地 public）或 https（Supabase Storage）。
+
+### 产品数据格式（简）
+
+```ts
+{
+  name: string,
+  description?: string,
+  price?: number,
+  imageUrl?: string,          // 主图
+  hoverImageUrl?: string,     // 悬停图
+  category: 'clothings' | 'accessories',
+  // 详情
+  colors?: string,            // JSON: ["黑色", "白色"]
+  sizes?: string,             // JSON: ["S","M","L"]
+  composition?: string,
+  care?: string,
+  galleryImages?: string,     // JSON: string[]
+  detailImages?: string,      // JSON: string[]
+  detailTexts?: string,       // JSON: string[]
+  colorImages?: string        // JSON: { [color: string]: string[] }
+}
+```
+
+## 上传图片（Supabase Storage）
+
+- 服务端 API：`POST /api/upload`
+- Body（JSON）：
+```json
+{
+  "filename": "clothings/product-9/main.webp",
+  "contentType": "image/webp",
+  "data": "<base64>"
+}
+```
+- 返回：`{ url: "https://.../storage/v1/object/public/images/clothings/product-9/main.webp" }`
+- 将该 url 写入数据库字段（如 imageUrl / galleryImages / colorImages 等）。
+
+## 部署到 Vercel（使用 Supabase 作为数据库与存储）
+
+1) 在 Vercel 连接本仓库后，配置环境变量（Production/Preview 都需）：
+- `DATABASE_URL`：Supabase Postgres 连接串
+- `SUPABASE_URL`：Supabase 项目 URL
+- `SUPABASE_SERVICE_ROLE`：Service role key（仅服务端使用，不暴露到客户端）
+- 可选 `SUPABASE_BUCKET`：默认为 `images`
+
+2) Supabase 控制台：
+- 创建 `images` bucket（可设为 public，或用私有 + 签名 URL）。
+- 确保 Storage Policies 允许 service role 上传。
+
+3) 构建与数据：
+- 直接 Deploy（Next.js 14 默认工作）。
+- 生产初始化：不要在 Vercel 上运行 `db:seed`；使用 `npm run db:migrate` / `npx prisma migrate deploy` 或 `npm run db:init`，再通过 API/Studio 写入数据。
+
+4) 运行与兼容：
+- `lib/prisma.ts` 已在检测到 `PRISMA_ACCELERATE_URL` 时启用 Accelerate，Serverless 更稳，本地不影响。
+- `app/api/upload/route.ts` 使用 Supabase Storage 上传；未配置相关环境变量时，会返回 400，不影响本地使用 public 静态图片。
 
 ## 常用命令
-
-### 开发
 
 ```bash
 npm run dev          # 启动开发服务器
 npm run build        # 构建生产版本
 npm run start        # 启动生产服务器
 npm run lint         # 代码检查
-```
 
-### 数据库
-
-```bash
 npm run db:generate  # 生成 Prisma Client
 npm run db:push      # 推送 schema（开发）
 npm run db:migrate   # 创建迁移（生产）
 npm run db:studio    # 打开 Prisma Studio
-npm run db:seed      # 填充种子数据（会清空数据）
-npm run db:init      # 初始化数据（不会清空数据）
+npm run db:seed      # 开发填充（会清空数据）
+npm run db:init      # 生产初始化（不会清空数据）
 ```
 
-### PostgreSQL 服务
-
-```bash
-./scripts/postgres.sh start    # 启动
-./scripts/postgres.sh stop     # 停止
-./scripts/postgres.sh status   # 状态
-./scripts/postgres.sh restart  # 重启
-```
-
-## 数据管理
-
-### 静态配置
-
-- **主视觉图片**：`app/config/heroImages.ts`
-- **系列信息**：`app/config/collections.ts`
-
-### 产品数据格式
-
-```typescript
-{
-  name: string          // 必填：产品名称
-  description?: string  // 可选：产品描述
-  price?: number       // 可选：价格
-  imageUrl?: string    // 可选：默认图片路径
-  hoverImageUrl?: string // 可选：悬停图片路径
-  category: string     // 必填：'clothings' 或 'accessories'
-}
-```
-
-### 管理方式
-
-#### 1. Prisma Studio（图形界面）
-
-```bash
-npm run db:studio
-```
-
-访问 `http://localhost:5555`
-
-#### 2. REST API
-
-**创建产品**
-```bash
-POST /api/products
-Content-Type: application/json
-
-{
-  "name": "产品名称",
-  "description": "产品描述",
-  "price": 1299.0,
-  "imageUrl": "/images/collections/clothings/products/product-1.webp",
-  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover.webp",
-  "category": "clothings"
-}
-```
-
-**更新产品**
-```bash
-PATCH /api/products/{id}
-Content-Type: application/json
-
-{
-  "price": 1499.0,
-  "hoverImageUrl": "/images/collections/clothings/products/product-1-hover-new.webp"
-}
-```
-
-**其他操作**
-```bash
-GET    /api/products              # 获取所有产品
-GET    /api/products?category=clothings  # 按分类筛选
-GET    /api/products/{id}         # 获取单个产品
-DELETE /api/products/{id}         # 删除产品
-```
-
-## 图片路径规则
-
-- **主视觉图片**：`public/images/hero/hero-{编号}.webp`
-- **系列封面**：`public/images/collections/{系列slug}/cover.webp`
-- **产品默认图片**：`/images/collections/{系列slug}/products/product-{编号}.webp`
-- **产品悬停图片**：`/images/collections/{系列slug}/products/product-{编号}-hover.webp`
-
-## 部署
-
-### 构建生产版本
-
-```bash
-npm run build
-npm run start
-```
-
-### 数据库迁移（生产环境）
-
-```bash
-npm run db:migrate
-npx prisma migrate deploy
-```
-
-### 环境变量
-
-确保生产环境设置了正确的 `DATABASE_URL`。
-
-⚠️ **注意**：
-- `db:seed` 会清空所有数据，仅用于开发环境
-- 生产环境使用 `db:init` 或 API 管理数据
-- 当前 API 未实现身份验证，生产环境需要添加
+## 说明
+- 本地：可继续使用 public/images 相对路径；也可配置 Supabase 变量直接使用云存储上传。
+- 生产（Vercel）：数据库与图片均走 Supabase；前端 Image 组件已允许 https 源，无需改动。
