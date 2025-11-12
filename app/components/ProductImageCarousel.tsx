@@ -54,7 +54,7 @@ export default function ProductImageCarousel({
   if (displayImages.length === 0) {
     return (
       <div className="relative w-full aspect-[3/4] bg-gray-100 overflow-hidden">
-        <ImagePlaceholder titleSize="md" name={productName} />
+        <ImagePlaceholder titleSize="md" name={productName || '产品'} />
       </div>
     )
   }
@@ -90,7 +90,7 @@ export default function ProductImageCarousel({
                   }
                 />
               ) : (
-                <ImagePlaceholder titleSize="md" name={productName} />
+                <ImagePlaceholder titleSize="md" name={productName || '产品'} />
               )}
             </div>
           )

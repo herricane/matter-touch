@@ -1,9 +1,5 @@
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
 function createClient() {
   const client = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query'] : [],
@@ -19,6 +15,10 @@ function createClient() {
     // ignore when accelerate is not installed
   }
   return client
+}
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: ReturnType<typeof createClient> | undefined
 }
 
 export const prisma = globalForPrisma.prisma ?? createClient()
