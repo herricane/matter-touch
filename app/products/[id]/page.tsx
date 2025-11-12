@@ -33,7 +33,8 @@ export default async function ProductPage({ params }: PageProps) {
   const detailImages = product.detailImages ? JSON.parse(product.detailImages) : []
   const detailTexts = product.detailTexts ? JSON.parse(product.detailTexts) : []
 
-  const colorImagesMap = product.colorImages
+  // colorImages 现在是 { [color: string]: string } 格式，每个颜色对应单个图片
+  const colorImagesMap: Record<string, string> = product.colorImages
     ? JSON.parse(product.colorImages)
     : {}
 

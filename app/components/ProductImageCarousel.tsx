@@ -7,7 +7,7 @@ import ImagePlaceholder from './ImagePlaceholder'
 interface ProductImageCarouselProps {
   images: string[]
   selectedColor?: string | null
-  colorImages?: Record<string, string[]> // 每个颜色对应的图片数组
+  colorImages?: Record<string, string> // 每个颜色对应的单个图片
   productName?: string // 产品名称，用于 placeholder 显示
 }
 
@@ -21,9 +21,15 @@ export default function ProductImageCarousel({
   const [errorMap, setErrorMap] = useState<Record<number, boolean>>({})
 
   // 根据选定的颜色决定显示的图片
+  // 如果选择了颜色：
+  //   - 有对应的图片（且不为空字符串）：显示该颜色的单个图片
+  //   - 没有对应的图片：显示空数组（会触发 placeholder 显示）
+  // 如果没有选择颜色：显示默认图片数组
   const displayImages =
-    selectedColor && colorImages && colorImages[selectedColor]
-      ? colorImages[selectedColor]
+    selectedColor
+      ? colorImages && colorImages[selectedColor] && colorImages[selectedColor].trim()
+        ? [colorImages[selectedColor]]
+        : [] // 选择了颜色但没有对应图片，显示空数组以触发 placeholder
       : images
 
   // 自动滚动 - 只在没有选定颜色时启用
@@ -37,11 +43,12 @@ export default function ProductImageCarousel({
     return () => clearInterval(interval)
   }, [displayImages.length, selectedColor])
 
-  // 当颜色改变或图片源变化时，重置状态
+  // 当颜色改变时，重置状态（包括错误状态）
+  // 注意：只依赖 selectedColor，避免 displayImages 变化时频繁重置
   useEffect(() => {
     setCurrentIndex(0)
     setErrorMap({})
-  }, [selectedColor, displayImages])
+  }, [selectedColor])
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)
@@ -82,14 +89,25 @@ export default function ProductImageCarousel({
                   className="object-cover"
                   priority={index === 0}
                   quality={90}
-                  onError={() =>
-                    setErrorMap((prev) => ({
-                      ...prev,
-                      [index]: true,
-                    }))
-                  }
+                  onError={(e) => {
+                    // 当图片加载失败时（包括颜色图片），立即显示 placeholder
+                    // 隐藏图片元素，阻止浏览器继续尝试加载
+                    const imgElement = e.currentTarget
+                    imgElement.style.display = 'none'
+                    
+                    // 标记为错误状态，显示 placeholder
+                    setErrorMap((prev) => {
+                      // 如果已经标记为错误，不再更新（防止重复触发和重复请求）
+                      if (prev[index]) return prev
+                      return {
+                        ...prev,
+                        [index]: true,
+                      }
+                    })
+                  }}
                 />
               ) : (
+                // 图片加载失败时显示 placeholder（包括颜色图片）
                 <ImagePlaceholder titleSize="md" name={productName || '产品'} />
               )}
             </div>

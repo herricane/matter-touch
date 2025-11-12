@@ -69,7 +69,7 @@ npm run dev
   galleryImages?: string,     // JSON: string[]
   detailImages?: string,      // JSON: string[]
   detailTexts?: string,       // JSON: string[]
-  colorImages?: string        // JSON: { [color: string]: string[] }
+  colorImages?: string        // JSON: { [color: string]: string } - 每个颜色对应单个图片
 }
 ```
 
@@ -100,8 +100,20 @@ npm run dev
 - 确保 Storage Policies 允许 service role 上传。
 
 3) 构建与数据：
-- 直接 Deploy（Next.js 14 默认工作）。
-- 生产初始化：不要在 Vercel 上运行 `db:seed`；使用 `npm run db:migrate` / `npx prisma migrate deploy` 或 `npm run db:init`，再通过 API/Studio 写入数据。
+- 构建脚本会自动创建数据库表（通过 `prisma db push`）
+- **首次部署后，需要初始化数据**：
+  - 方法 1（推荐）：访问 `POST https://your-domain.vercel.app/api/init-db?secret=YOUR_SECRET`
+    - 在 Vercel 环境变量中设置 `DB_INIT_SECRET`（可选，但建议设置）
+    - 使用 curl 或 Postman 发送 POST 请求：
+      ```bash
+      curl -X POST "https://your-domain.vercel.app/api/init-db?secret=YOUR_SECRET"
+      ```
+  - 方法 2：使用 Vercel CLI 本地运行（需要配置 DATABASE_URL）：
+    ```bash
+    npx vercel env pull .env.local
+    npm run db:init
+    ```
+  - 方法 3：通过 Supabase Studio 手动添加数据
 
 4) 运行与兼容：
 - `lib/prisma.ts` 已在检测到 `PRISMA_ACCELERATE_URL` 时启用 Accelerate，Serverless 更稳，本地不影响。
