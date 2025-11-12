@@ -101,22 +101,141 @@ npm run dev
 
 3) 构建与数据：
 - **首次部署前，需要创建数据库表**：
-  - 方法 1（推荐）：在本地运行 `npm run db:push`（需要配置 DATABASE_URL 环境变量）
-  - 方法 2：通过 Supabase Studio 的 SQL Editor 手动创建表
-  - 方法 3：部署后通过 API 端点创建（见下方）
-- **首次部署后，需要初始化数据**：
-  - 方法 1（推荐）：访问 `POST https://your-domain.vercel.app/api/init-db?secret=YOUR_SECRET`
-    - 在 Vercel 环境变量中设置 `DB_INIT_SECRET`（可选，但建议设置）
-    - 使用 curl 或 Postman 发送 POST 请求：
-      ```bash
-      curl -X POST "https://your-domain.vercel.app/api/init-db?secret=YOUR_SECRET"
-      ```
-  - 方法 2：使用 Vercel CLI 本地运行（需要配置 DATABASE_URL）：
-    ```bash
-    npx vercel env pull .env.local
-    npm run db:init
-    ```
-  - 方法 3：通过 Supabase Studio 手动添加数据
+
+  **方法 1：通过 Supabase Studio SQL Editor（推荐，最简单）**
+  
+  1. 登录 [Supabase 控制台](https://app.supabase.com)，进入你的项目
+  2. 在左侧菜单找到 **SQL Editor**（SQL 编辑器）
+  3. 点击 **New query**（新建查询）
+  4. 复制并执行以下 SQL 语句：
+  
+  ```sql
+  -- 创建 Collection 表
+  CREATE TABLE "Collection" (
+      "id" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "slug" TEXT NOT NULL,
+      "coverImageUrl" TEXT,
+      "description" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "Collection_pkey" PRIMARY KEY ("id")
+  );
+  
+  -- 创建 Product 表
+  CREATE TABLE "Product" (
+      "id" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "description" TEXT,
+      "price" DOUBLE PRECISION,
+      "imageUrl" TEXT,
+      "hoverImageUrl" TEXT,
+      "colors" TEXT,
+      "sizes" TEXT,
+      "composition" TEXT,
+      "care" TEXT,
+      "galleryImages" TEXT,
+      "detailTexts" TEXT,
+      "detailImages" TEXT,
+      "colorImages" TEXT,
+      "collectionId" TEXT NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+  );
+  
+  -- 创建唯一索引（Collection 的 slug 字段）
+  CREATE UNIQUE INDEX "Collection_slug_key" ON "Collection"("slug");
+  
+  -- 创建外键约束（Product 关联到 Collection）
+  ALTER TABLE "Product" ADD CONSTRAINT "Product_collectionId_fkey" 
+      FOREIGN KEY ("collectionId") REFERENCES "Collection"("id") 
+      ON DELETE CASCADE ON UPDATE CASCADE;
+  ```
+  
+  5. 点击 **Run**（运行）按钮执行 SQL
+  6. 确认执行成功（应该看到 "Success. No rows returned" 或类似的成功消息）
+
+  **方法 2：通过本地运行 Prisma 命令（需要配置 DATABASE_URL）**
+  
+  1. **获取 Supabase 数据库连接字符串**：
+     - 在 Supabase 项目设置中找到 **Settings** → **Database**
+     - 找到 **Connection string** 部分
+     - 选择 **URI** 格式，复制连接字符串
+     - 格式类似：`postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres`
+     - ⚠️ 注意：Supabase 提供了两种连接方式：
+       - **Session mode**（会话模式）：端口 `5432`，适合直接连接
+       - **Transaction mode**（事务模式）：端口 `6543`，适合连接池，推荐用于 Prisma
+  
+  2. **在项目根目录配置环境变量**：
+     ```bash
+     # 创建或编辑 .env 文件
+     DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres"
+     ```
+     ⚠️ 注意：
+     - 将 `[PROJECT-REF]` 替换为你的项目引用 ID（在 Supabase 项目 URL 中可以找到，格式类似 `abcdefghijklmnop`）
+     - 将 `[YOUR-PASSWORD]` 替换为你的数据库密码（如果忘记，可以在 Supabase 设置中重置）
+     - 将 `[REGION]` 替换为你的区域（如 `ap-northeast-1`、`us-east-1` 等）
+     - 如果密码包含特殊字符，需要进行 URL 编码（如 `@` 编码为 `%40`）
+  
+  3. **运行 Prisma 命令创建表**：
+     ```bash
+     npm run db:push -- --accept-data-loss
+     ```
+  
+  4. **确认执行成功**：
+     - 应该看到 "The database is now in sync with your schema" 或类似的成功消息
+     - 如果表已存在，会显示 "The database is already in sync with your schema"
+- **初始化数据（将 data.ts 中的数据填入数据库）**：
+
+  **方法 1：在本地初始化（推荐，部署前后都可以）**
+  
+  1. **确保已配置 DATABASE_URL 环境变量**（指向 Supabase）：
+     ```bash
+     # 在 .env 文件中配置（参考上面的"方法 2"步骤）
+     DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres"
+     ```
+  
+  2. **运行初始化脚本**：
+     ```bash
+     npm run db:init
+     ```
+     这个命令会：
+     - 读取 `prisma/data.ts` 中的数据
+     - 检查数据库是否已有数据（如果有则跳过）
+     - 如果数据库为空，则填充初始数据（2 个系列：成衣、配饰，共 4 个产品）
+  
+  3. **确认执行成功**：
+     - 应该看到 "✅ 初始化完成！已创建 X 个产品。" 的消息
+     - 可以在 Supabase Studio 的 Table Editor 中查看数据
+
+  **方法 2：部署后通过 API 初始化（需要先部署）**
+  
+  1. **先部署到 Vercel**（如果还没部署）：
+     - 在 Vercel 中连接 GitHub 仓库
+     - 配置环境变量（DATABASE_URL、SUPABASE_URL 等）
+     - 等待部署完成
+  
+  2. **（可选）设置安全密钥**：
+     - 在 Vercel 环境变量中添加 `DB_INIT_SECRET`（例如：`your-secret-key-123`）
+  
+  3. **调用初始化 API**：
+     ```bash
+     # 如果设置了 DB_INIT_SECRET
+     curl -X POST "https://your-domain.vercel.app/api/init-db?secret=your-secret-key-123"
+     
+     # 如果没有设置 DB_INIT_SECRET，可以不传 secret 参数
+     curl -X POST "https://your-domain.vercel.app/api/init-db"
+     ```
+  
+  4. **确认执行成功**：
+     - 应该收到 JSON 响应：`{"success": true, "message": "数据库初始化完成", ...}`
+     - 可以在 Supabase Studio 的 Table Editor 中查看数据
+
+  **方法 3：通过 Supabase Studio 手动添加数据**
+  
+  - 在 Supabase Studio 的 Table Editor 中手动添加系列和产品数据
+  - 不推荐，因为需要手动输入所有字段
 
 4) 运行与兼容：
 - `lib/prisma.ts` 已在检测到 `PRISMA_ACCELERATE_URL` 时启用 Accelerate，Serverless 更稳，本地不影响。
