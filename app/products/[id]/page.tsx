@@ -12,6 +12,9 @@ interface PageProps {
   }
 }
 
+// 强制动态渲染，避免构建时的数据库连接问题
+export const dynamic = 'force-dynamic'
+
 export default async function ProductPage({ params }: PageProps) {
   const product = await prisma.product.findUnique({
     where: { id: params.id },
