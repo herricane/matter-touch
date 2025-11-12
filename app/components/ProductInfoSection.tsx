@@ -42,6 +42,7 @@ export default function ProductInfoSection({
           images={galleryImages}
           selectedColor={selectedColor}
           colorImages={colorImages}
+          productName={name}
         />
       </div>
 

@@ -14,4 +14,3 @@ export const heroImages: HeroImage[] = [
     imageUrl: '/images/hero/hero-3.webp',
   },
 ]
-

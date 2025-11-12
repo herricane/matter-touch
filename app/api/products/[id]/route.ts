@@ -16,22 +16,17 @@ export async function GET(
   try {
     const product = await prisma.product.findUnique({
       where: { id },
+      include: { collection: true },
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: '产品不存在' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: '产品不存在' }, { status: 404 })
     }
 
     return NextResponse.json(product)
   } catch (error) {
     console.error('获取产品失败：', error)
-    return NextResponse.json(
-      { error: '获取产品失败' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: '获取产品失败' }, { status: 500 })
   }
 }
 
@@ -43,7 +38,23 @@ export async function PATCH(
   const { id } = await params
   try {
     const body = await request.json()
-    const { name, description, price, imageUrl, hoverImageUrl, category } = body
+    const {
+      name,
+      description,
+      price,
+      imageUrl,
+      hoverImageUrl,
+      colors,
+      sizes,
+      composition,
+      care,
+      galleryImages,
+      detailTexts,
+      detailImages,
+      colorImages,
+      collectionId,
+      collectionSlug,
+    } = body
 
     // 检查产品是否存在
     const existingProduct = await prisma.product.findUnique({
@@ -51,39 +62,50 @@ export async function PATCH(
     })
 
     if (!existingProduct) {
-      return NextResponse.json(
-        { error: '产品不存在' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: '产品不存在' }, { status: 404 })
     }
 
-    // 验证分类（如果提供）
-    if (category && !['clothings', 'accessories'].includes(category)) {
-      return NextResponse.json(
-        { error: '分类必须是 clothings 或 accessories' },
-        { status: 400 }
-      )
+    let resolvedCollectionId: string | null = null
+    if (collectionId) {
+      resolvedCollectionId = collectionId
+    } else if (collectionSlug) {
+      const collection = await prisma.collection.findUnique({
+        where: { slug: collectionSlug },
+      })
+      resolvedCollectionId = collection?.id ?? null
     }
 
     const product = await prisma.product.update({
       where: { id },
       data: {
-        ...(name && { name }),
+        ...(name !== undefined && { name }),
         ...(description !== undefined && { description: description || null }),
-        ...(price !== undefined && { price: price ? parseFloat(price) : null }),
+        ...(price !== undefined && {
+          price: price !== null && price !== '' ? parseFloat(price) : null,
+        }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(hoverImageUrl !== undefined && { hoverImageUrl: hoverImageUrl || null }),
-        ...(category && { category }),
+        ...(colors !== undefined && { colors: colors || null }),
+        ...(sizes !== undefined && { sizes: sizes || null }),
+        ...(composition !== undefined && { composition: composition || null }),
+        ...(care !== undefined && { care: care || null }),
+        ...(galleryImages !== undefined && { galleryImages: galleryImages || null }),
+        ...(detailTexts !== undefined && { detailTexts: detailTexts || null }),
+        ...(detailImages !== undefined && { detailImages: detailImages || null }),
+        ...(colorImages !== undefined && { colorImages: colorImages || null }),
+        ...(resolvedCollectionId && {
+          collection: {
+            connect: { id: resolvedCollectionId },
+          },
+        }),
       },
+      include: { collection: true },
     })
 
     return NextResponse.json(product)
   } catch (error) {
     console.error('更新产品失败：', error)
-    return NextResponse.json(
-      { error: '更新产品失败' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: '更新产品失败' }, { status: 500 })
   }
 }
 
@@ -99,10 +121,7 @@ export async function DELETE(
     })
 
     if (!product) {
-      return NextResponse.json(
-        { error: '产品不存在' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: '产品不存在' }, { status: 404 })
     }
 
     await prisma.product.delete({
@@ -112,10 +131,7 @@ export async function DELETE(
     return NextResponse.json({ message: '产品已删除' })
   } catch (error) {
     console.error('删除产品失败：', error)
-    return NextResponse.json(
-      { error: '删除产品失败' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: '删除产品失败' }, { status: 500 })
   }
 }
 

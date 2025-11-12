@@ -2,10 +2,14 @@ import HeroCarousel from './components/HeroCarousel'
 import CollectionCard from './components/CollectionCard'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-import { heroImages } from './config/heroImages'
-import { collections } from './config/collections'
+import { heroImages } from './config/imageAssets'
+import { prisma } from '@/lib/prisma'
 
-export default function Home() {
+export default async function Home() {
+  const collections = await prisma.collection.findMany({
+    orderBy: { createdAt: 'asc' },
+  })
+
   return (
     <main className="min-h-screen bg-white">
       <Navbar />
@@ -25,10 +29,10 @@ export default function Home() {
             <div className="w-24 h-px bg-black mx-auto mb-12"></div>
           </div>
 
-          {/* 系列网格 - 从静态配置读取 */}
+          {/* 系列网格 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
             {collections.map((collection) => (
-              <CollectionCard key={collection.slug} collection={collection} />
+              <CollectionCard key={collection.id} collection={collection} />
             ))}
           </div>
         </div>

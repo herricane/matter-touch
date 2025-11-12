@@ -2,19 +2,23 @@
 
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import ImagePlaceholder from './ImagePlaceholder'
 
 interface ProductImageCarouselProps {
   images: string[]
   selectedColor?: string | null
   colorImages?: Record<string, string[]> // 每个颜色对应的图片数组
+  productName?: string // 产品名称，用于 placeholder 显示
 }
 
 export default function ProductImageCarousel({
   images,
   selectedColor,
   colorImages,
+  productName,
 }: ProductImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [errorMap, setErrorMap] = useState<Record<number, boolean>>({})
 
   // 根据选定的颜色决定显示的图片
   const displayImages =
@@ -33,10 +37,11 @@ export default function ProductImageCarousel({
     return () => clearInterval(interval)
   }, [displayImages.length, selectedColor])
 
-  // 当颜色改变时，重置到第一张图片
+  // 当颜色改变或图片源变化时，重置状态
   useEffect(() => {
     setCurrentIndex(0)
-  }, [selectedColor])
+    setErrorMap({})
+  }, [selectedColor, displayImages])
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)
@@ -48,8 +53,8 @@ export default function ProductImageCarousel({
 
   if (displayImages.length === 0) {
     return (
-      <div className="relative w-full aspect-[3/4] bg-gray-100 flex items-center justify-center">
-        <span className="text-gray-400 text-sm">暂无图片</span>
+      <div className="relative w-full aspect-[3/4] bg-gray-100 overflow-hidden">
+        <ImagePlaceholder titleSize="md" name={productName} />
       </div>
     )
   }
@@ -58,23 +63,38 @@ export default function ProductImageCarousel({
     <div className="relative w-full aspect-[3/4] bg-gray-50 overflow-hidden">
       {/* 图片容器 */}
       <div className="relative w-full h-full">
-        {displayImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-700 ${
-              index === currentIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <Image
-              src={image}
-              alt={`商品图片 ${index + 1}`}
-              fill
-              className="object-cover"
-              priority={index === 0}
-              quality={90}
-            />
-          </div>
-        ))}
+        {displayImages.map((image, index) => {
+          const hasError = errorMap[index]
+          const isActive = index === currentIndex
+
+          return (
+            <div
+              key={`${image}-${index}`}
+              className={`absolute inset-0 transition-opacity duration-700 ${
+                isActive ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {!hasError ? (
+                <Image
+                  src={image}
+                  alt={`商品图片 ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  priority={index === 0}
+                  quality={90}
+                  onError={() =>
+                    setErrorMap((prev) => ({
+                      ...prev,
+                      [index]: true,
+                    }))
+                  }
+                />
+              ) : (
+                <ImagePlaceholder titleSize="md" name={productName} />
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* 左右箭头 - 只在有多张图片时显示 */}

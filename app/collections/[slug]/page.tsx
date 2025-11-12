@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import ProductCard from '@/app/components/ProductCard'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
-import { getCollectionBySlug } from '@/app/config/collections'
 
 interface PageProps {
   params: {
@@ -13,19 +12,20 @@ interface PageProps {
 }
 
 export default async function CollectionPage({ params }: PageProps) {
-  const collection = getCollectionBySlug(params.slug)
+  const collection = await prisma.collection.findUnique({
+    where: { slug: params.slug },
+    include: {
+      products: {
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  })
 
   if (!collection) {
     notFound()
   }
 
-  // 从数据库获取产品
-  const products = await prisma.product.findMany({
-    where: {
-      category: params.slug,
-    },
-    orderBy: { createdAt: 'asc' },
-  })
+  const products = collection.products
 
   return (
     <main className="min-h-screen bg-white">
@@ -39,7 +39,7 @@ export default async function CollectionPage({ params }: PageProps) {
           </h1>
           <div className="w-24 h-px bg-black mx-auto mb-8"></div>
           <p className="text-sm tracking-widest uppercase text-gray-800">
-            {params.slug.toUpperCase()}
+            {collection.slug.toUpperCase()}
           </p>
         </div>
       </section>

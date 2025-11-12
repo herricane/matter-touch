@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import ProductInfoSection from '@/app/components/ProductInfoSection'
+import DetailImage from '@/app/components/DetailImage'
 
 interface PageProps {
   params: {
@@ -15,9 +15,10 @@ interface PageProps {
 export default async function ProductPage({ params }: PageProps) {
   const product = await prisma.product.findUnique({
     where: { id: params.id },
+    include: { collection: true },
   })
 
-  if (!product) {
+  if (!product || !product.collection) {
     notFound()
   }
 
@@ -31,13 +32,11 @@ export default async function ProductPage({ params }: PageProps) {
     : []
   const detailImages = product.detailImages ? JSON.parse(product.detailImages) : []
   const detailTexts = product.detailTexts ? JSON.parse(product.detailTexts) : []
-  
-  // 从数据库读取颜色图片映射
+
   const colorImagesMap = product.colorImages
     ? JSON.parse(product.colorImages)
     : {}
 
-  // 格式化价格
   const formattedPrice = product.price
     ? `¥${product.price.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
     : null
@@ -92,10 +91,10 @@ export default async function ProductPage({ params }: PageProps) {
         <section className="py-16 px-6 sm:px-8">
           <div className="max-w-7xl mx-auto space-y-16">
             {[0, 1, 2].map((index) => {
-              const hasImage = index < detailImages.length && detailImages[index]
-              const hasText = index < detailTexts.length && detailTexts[index]
+              const imageSrc = index < detailImages.length ? detailImages[index] : null
+              const text = index < detailTexts.length ? detailTexts[index] : null
 
-              if (!hasImage && !hasText) return null
+              if (!imageSrc && !text) return null
 
               const isEven = index % 2 === 0
 
@@ -104,26 +103,19 @@ export default async function ProductPage({ params }: PageProps) {
                   key={index}
                   className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16"
                 >
-                  {/* 图片 */}
-                  {hasImage && (
+                  {imageSrc && (
                     <div className={!isEven ? 'lg:order-2' : ''}>
-                      <div className="relative w-full aspect-[4/3] bg-gray-50">
-                        <Image
-                          src={detailImages[index]}
-                          alt={`${product.name} - 详情 ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          quality={90}
-                        />
-                      </div>
+                      <DetailImage
+                        src={imageSrc}
+                        alt={`${product.name} - 详情 ${index + 1}`}
+                      />
                     </div>
                   )}
 
-                  {/* 文字 */}
-                  {hasText && (
+                  {text && (
                     <div className={`flex items-center ${!isEven ? 'lg:order-1' : ''}`}>
                       <p className="text-sm font-light leading-relaxed text-gray-700">
-                        {detailTexts[index]}
+                        {text}
                       </p>
                     </div>
                   )}
@@ -149,7 +141,7 @@ export default async function ProductPage({ params }: PageProps) {
       <section className="py-12 px-6 sm:px-8 border-t border-gray-100">
         <div className="max-w-7xl mx-auto text-center">
           <Link
-            href={`/collections/${product.category}`}
+            href={`/collections/${product.collection.slug}`}
             className="text-sm font-light tracking-widest uppercase text-black hover:opacity-60 transition-opacity"
           >
             ← 返回系列

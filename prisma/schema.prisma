@@ -10,24 +10,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Collection {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  coverImageUrl String?
+  description   String?
+  products      Product[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 model Product {
   id            String   @id @default(cuid())
   name          String
   description   String?
   price         Float?
   imageUrl      String?
-  hoverImageUrl String?  // 悬停时的图片
-  category      String   // 'clothings' 或 'accessories'
+  hoverImageUrl String?
   // 商品详情页字段
-  colors        String?  // JSON数组，格式: ["黑色", "白色", "灰色"]
-  sizes         String?  // JSON数组，格式: ["S", "M", "L", "XL"]
-  composition   String?  // 成分信息，如 "100% 棉" 或 "90% 棉, 10% 聚酯纤维, 含绒量: 80%"
-  care          String?  // 洗涤方式，如 "手洗，不可漂白，低温熨烫"
-  galleryImages String?  // JSON数组，商品详情页的图片集合
-  detailTexts   String?  // JSON数组，商品详情页的文字描述，对应三张详情图
-  detailImages  String?  // JSON数组，商品详情页的三张详情图片
-  colorImages   String?  // JSON对象，格式: {"黑色": ["/path/to/image1.webp", "/path/to/image2.webp"], "白色": [...]}
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  colors        String?
+  sizes         String?
+  composition   String?
+  care          String?
+  galleryImages String?
+  detailTexts   String?
+  detailImages  String?
+  colorImages   String?
+  collectionId  String
+  collection    Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 

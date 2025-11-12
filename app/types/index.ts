@@ -1,8 +1,12 @@
 // 系列类型
 export interface Collection {
+  id: string
   name: string
   slug: string
-  coverImageUrl: string
+  coverImageUrl?: string | null
+  description?: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
 // 主视觉图片类型
@@ -18,17 +22,18 @@ export interface Product {
   description?: string | null
   price?: number | null
   imageUrl?: string | null
-  hoverImageUrl?: string | null  // 悬停时的图片
-  category: string
+  hoverImageUrl?: string | null
   // 商品详情页字段
-  colors?: string | null  // JSON数组，格式: ["黑色", "白色", "灰色"]
-  sizes?: string | null  // JSON数组，格式: ["S", "M", "L", "XL"]
+  colors?: string | null
+  sizes?: string | null
   composition?: string | null
   care?: string | null
-  galleryImages?: string | null  // JSON数组，商品详情页的图片集合
-  detailTexts?: string | null  // JSON数组，商品详情页的文字描述，对应三张详情图
-  detailImages?: string | null  // JSON数组，商品详情页的三张详情图片
-  colorImages?: string | null  // JSON对象，格式: {"黑色": ["/path/to/image1.webp", "/path/to/image2.webp"], "白色": [...]}
+  galleryImages?: string | null
+  detailTexts?: string | null
+  detailImages?: string | null
+  colorImages?: string | null
+  collectionId: string
+  collection?: Collection | null
   createdAt: Date
   updatedAt: Date
 }

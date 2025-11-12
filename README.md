@@ -47,8 +47,8 @@ npm run dev
 
 ## 数据管理
 
-- 主视觉图片：`app/config/heroImages.ts`
-- 系列信息：`app/config/collections.ts`
+- 主视觉图片：`app/config/imageAssets.ts`
+- 系列信息：存储于数据库（`Collection` 表），通过 Prisma 读取
 - 产品数据在数据库（Prisma + Postgres）。图片字段可存相对路径（本地 public）或 https（Supabase Storage）。
 
 ### 产品数据格式（简）
