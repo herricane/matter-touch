@@ -6,13 +6,21 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.in',
       },
     ],
     // 优化图片加载
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  // 优化构建性能，避免构建跟踪时的堆栈溢出
+  experimental: {
+    optimizePackageImports: ['@prisma/client'],
   },
 }
 
