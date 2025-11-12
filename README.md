@@ -100,7 +100,10 @@ npm run dev
 - 确保 Storage Policies 允许 service role 上传。
 
 3) 构建与数据：
-- 构建脚本会自动创建数据库表（通过 `prisma db push`）
+- **首次部署前，需要创建数据库表**：
+  - 方法 1（推荐）：在本地运行 `npm run db:push`（需要配置 DATABASE_URL 环境变量）
+  - 方法 2：通过 Supabase Studio 的 SQL Editor 手动创建表
+  - 方法 3：部署后通过 API 端点创建（见下方）
 - **首次部署后，需要初始化数据**：
   - 方法 1（推荐）：访问 `POST https://your-domain.vercel.app/api/init-db?secret=YOUR_SECRET`
     - 在 Vercel 环境变量中设置 `DB_INIT_SECRET`（可选，但建议设置）

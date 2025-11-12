@@ -9,7 +9,11 @@ import { seedData, formatForPrisma } from '@/prisma/data'
  * 使用方法：
  * POST /api/init-db?secret=YOUR_SECRET  - 填充初始数据（仅在数据库为空时）
  * 
- * 注意：数据库表需要在构建时通过 prisma db push 创建
+ * 注意：
+ * - 数据库表需要在首次部署前创建（通过本地运行 `npm run db:push` 或 Supabase Studio）
+ * - 此 API 仅用于填充数据，不会创建表结构
+ * - 如果表不存在，会返回错误，需要先创建表
+ * 
  * 安全：建议设置环境变量 DB_INIT_SECRET 并传递 secret 参数
  */
 export async function POST(request: NextRequest) {
