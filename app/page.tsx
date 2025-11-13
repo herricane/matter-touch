@@ -2,7 +2,6 @@ import HeroCarousel from './components/HeroCarousel'
 import CollectionCard from './components/CollectionCard'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-import { heroImages } from './config/imageAssets'
 import { prisma } from '@/lib/prisma'
 
 // 强制动态渲染，避免构建时的数据库连接问题
@@ -13,13 +12,23 @@ export default async function Home() {
     orderBy: { createdAt: 'asc' },
   })
 
+  // 从数据库获取主视觉图片
+  const heroImages = await prisma.heroImage.findMany({
+    orderBy: { order: 'asc' },
+  })
+
   return (
     <main className="min-h-screen bg-white">
       <Navbar showHomeLink={true} />
 
       {/* 主视觉区域 - 背景图片自动滚动 */}
       <section className="pt-20">
-        <HeroCarousel images={heroImages} />
+        <HeroCarousel
+          images={heroImages.map((img) => ({
+            name: img.name,
+            imageUrl: img.imageUrl,
+          }))}
+        />
       </section>
 
       {/* 产品系列展示 */}

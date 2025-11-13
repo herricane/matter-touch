@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { seedData, formatForPrisma } from '@/prisma/data'
+import { seedData, formatForPrisma, heroImagesData } from '@/prisma/data'
 
 /**
  * 数据库初始化 API
@@ -47,6 +47,15 @@ export async function POST(request: NextRequest) {
 
     // 填充初始数据
     results.push('数据库为空，开始填充初始数据...')
+    
+    // 创建主视觉图片
+    for (const heroImage of heroImagesData) {
+      await prisma.heroImage.create({
+        data: heroImage,
+      })
+    }
+    results.push(`✓ 已创建 ${heroImagesData.length} 个主视觉图片。`)
+
     const collections = formatForPrisma(seedData)
 
     for (const collection of collections) {
@@ -63,7 +72,8 @@ export async function POST(request: NextRequest) {
     }
 
     const totalProducts = await prisma.product.count()
-    results.push(`✓ 初始化完成！已创建 ${totalProducts} 个产品。`)
+    const totalHeroImages = await prisma.heroImage.count()
+    results.push(`✓ 初始化完成！已创建 ${totalProducts} 个产品和 ${totalHeroImages} 个主视觉图片。`)
 
     return NextResponse.json({
       success: true,

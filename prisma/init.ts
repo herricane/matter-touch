@@ -7,7 +7,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { seedData, formatForPrisma } from './data'
+import { seedData, formatForPrisma, heroImagesData } from './data'
 
 const prisma = new PrismaClient()
 
@@ -22,6 +22,13 @@ async function main() {
   }
 
   console.log('数据库为空，开始填充初始数据...')
+
+  // 创建主视觉图片
+  for (const heroImage of heroImagesData) {
+    await prisma.heroImage.create({
+      data: heroImage,
+    })
+  }
 
   const collections = formatForPrisma(seedData)
 
@@ -39,7 +46,8 @@ async function main() {
   }
 
   const totalProducts = await prisma.product.count()
-  console.log(`✅ 初始化完成！已创建 ${totalProducts} 个产品。`)
+  const totalHeroImages = await prisma.heroImage.count()
+  console.log(`✅ 初始化完成！已创建 ${totalProducts} 个产品和 ${totalHeroImages} 个主视觉图片。`)
 }
 
 main()

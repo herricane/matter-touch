@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { seedData, formatForPrisma } from './data'
+import { seedData, formatForPrisma, heroImagesData } from './data'
 
 const prisma = new PrismaClient()
 
@@ -9,6 +9,14 @@ async function main() {
   // 清空现有数据（注意顺序，先删产品再删系列）
   await prisma.product.deleteMany()
   await prisma.collection.deleteMany()
+  await prisma.heroImage.deleteMany()
+
+  // 创建主视觉图片
+  for (const heroImage of heroImagesData) {
+    await prisma.heroImage.create({
+      data: heroImage,
+    })
+  }
 
   const collections = formatForPrisma(seedData)
 

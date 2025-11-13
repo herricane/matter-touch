@@ -3,6 +3,25 @@
  * 用于 seed.ts, init.ts 和 init-db API
  */
 
+// 主视觉图片数据
+export const heroImagesData = [
+  {
+    name: '产品 1',
+    imageUrl: '/images/hero/hero-1.webp',
+    order: 0,
+  },
+  {
+    name: '产品 2',
+    imageUrl: '/images/hero/hero-2.webp',
+    order: 1,
+  },
+  {
+    name: '产品 3',
+    imageUrl: '/images/hero/hero-3.webp',
+    order: 2,
+  },
+]
+
 export const seedData = [
   {
     name: '成衣',
