@@ -21,6 +21,9 @@ const nextConfig = {
   // 优化构建性能
   experimental: {
     optimizePackageImports: ['@prisma/client'],
+    outputFileTracingIncludes: {
+      '/*': ['./node_modules/.prisma/client/**/*'],
+    },
   },
   // 优化 webpack 配置
   webpack: (config, { isServer }) => {
