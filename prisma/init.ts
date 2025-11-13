@@ -14,23 +14,24 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('检查数据库状态...')
 
+  const existingProducts = await prisma.product.count()
+  const existingHeroImages = await prisma.heroImage.count()
+  
+  if (existingProducts > 0 || existingHeroImages > 0) {
+    console.log(`数据库已有 ${existingProducts} 个产品和 ${existingHeroImages} 个主视觉图片，跳过初始化。`)
+    console.log('如需重新初始化，请先清空数据库或使用 seed.ts（开发环境）')
+    return
+  }
+
+  console.log('数据库为空，开始填充初始数据...')
+
   // 创建主视觉图片
   for (const heroImage of heroImagesData) {
     await prisma.heroImage.create({
       data: heroImage,
     })
   }
-
-  console.log('主视觉图片填充完成！')
-
-  const existingProducts = await prisma.product.count()
-  if (existingProducts > 0) {
-    console.log(`数据库已有 ${existingProducts} 个产品，跳过初始化。`)
-    console.log('如需重新初始化，请先清空数据库或使用 seed.ts（开发环境）')
-    return
-  }
-
-  console.log('产品数据为空，开始填充初始数据...')
+  console.log(`✓ 已创建 ${heroImagesData.length} 个主视觉图片。`)
 
   const collections = formatForPrisma(seedData)
 

@@ -1,20 +1,13 @@
 'use client'
 
-import type { HeroImage } from '../types'
-import BaseCarousel, { type CarouselImage } from './BaseCarousel'
+import type { CarouselImage } from '../types'
+import BaseCarousel from './BaseCarousel'
 
 interface HeroCarouselProps {
-  images: HeroImage[]
+  images: CarouselImage[]
 }
 
 export default function HeroCarousel({ images }: HeroCarouselProps) {
-  // 转换为 BaseCarousel 需要的格式
-  const carouselImages: CarouselImage[] = images.map((image, idx) => ({
-    src: image.imageUrl,
-    alt: image.name,
-    priority: idx === 0,
-  }))
-
   // 空状态
   if (images.length === 0) {
     return (
@@ -38,7 +31,7 @@ export default function HeroCarousel({ images }: HeroCarouselProps) {
 
   return (
     <BaseCarousel
-      images={carouselImages}
+      images={images}
       autoScrollInterval={5000}
       enableAutoScroll={true}
       transitionType="slide"

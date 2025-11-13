@@ -1,6 +1,7 @@
 'use client'
 
-import BaseCarousel, { type CarouselImage } from './BaseCarousel'
+import BaseCarousel from './BaseCarousel'
+import type { CarouselImage } from '../types'
 import ImagePlaceholder from './ImagePlaceholder'
 
 interface ProductImageCarouselProps {

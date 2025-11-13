@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import ImagePlaceholder from './ImagePlaceholder'
+import type { CarouselImage } from '../types'
 
 // 轮播箭头组件
 interface CarouselArrowProps {
@@ -36,12 +37,6 @@ function CarouselArrow({ direction, onClick, ariaLabel }: CarouselArrowProps) {
       </svg>
     </button>
   )
-}
-
-export interface CarouselImage {
-  src: string
-  alt: string
-  priority?: boolean
 }
 
 interface BaseCarouselProps {

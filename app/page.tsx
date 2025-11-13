@@ -3,6 +3,7 @@ import CollectionCard from './components/CollectionCard'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import { prisma } from '@/lib/prisma'
+import type { CarouselImage } from './types'
 
 // 强制动态渲染，避免构建时的数据库连接问题
 export const dynamic = 'force-dynamic'
@@ -22,14 +23,17 @@ export default async function Home() {
       <Navbar showHomeLink={true} />
 
       {/* 主视觉区域 - 背景图片自动滚动 */}
-      <section className="pt-20">
-        <HeroCarousel
-          images={heroImages.map((img) => ({
-            name: img.name,
-            imageUrl: img.imageUrl,
-          }))}
-        />
-      </section>
+      {heroImages.length > 0 && (
+        <section className="pt-20">
+          <HeroCarousel
+            images={heroImages.map<CarouselImage>((img, idx) => ({
+              src: img.imageUrl,
+              alt: img.name,
+              priority: idx === 0,
+            }))}
+          />
+        </section>
+      )}
 
       {/* 产品系列展示 */}
       <section id="collections" className="py-24 px-6 sm:px-8">
