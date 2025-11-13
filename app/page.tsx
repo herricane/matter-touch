@@ -15,7 +15,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
+      <Navbar showHomeLink={true} />
 
       {/* 主视觉区域 - 背景图片自动滚动 */}
       <section className="pt-20">
