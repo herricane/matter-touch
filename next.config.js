@@ -22,15 +22,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@prisma/client'],
   },
-  // 优化构建跟踪，排除可能导致问题的目录和文件
-  // 使用简单的路径模式，避免复杂的 glob 匹配导致堆栈溢出
-  outputFileTracingExcludes: {
-    '*': [
-      'node_modules/@swc',
-      'node_modules/@esbuild',
-      'node_modules/.prisma',
-    ],
-  },
   // 优化 webpack 配置
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -41,8 +32,6 @@ const nextConfig = {
     }
     return config
   },
-  // 排除某些包从构建跟踪
-  serverExternalPackages: ['@prisma/client'],
 }
 
 module.exports = nextConfig
