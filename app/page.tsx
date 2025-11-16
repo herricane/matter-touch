@@ -24,13 +24,14 @@ export default async function Home() {
 
       {/* 主视觉区域 - 背景图片自动滚动 */}
       {heroImages.length > 0 && (
-        <section className="pt-20">
+        <section className="pt-16">
           <HeroCarousel
             images={heroImages.map<CarouselImage>((img, idx) => ({
               src: img.imageUrl,
               alt: img.name,
               priority: idx === 0,
             }))}
+            containerClassName="h-[calc(100vh-64px)]"
           />
         </section>
       )}

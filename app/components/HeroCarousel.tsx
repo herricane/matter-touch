@@ -5,13 +5,14 @@ import BaseCarousel from './BaseCarousel'
 
 interface HeroCarouselProps {
   images: CarouselImage[]
+  containerClassName?: string
 }
 
-export default function HeroCarousel({ images }: HeroCarouselProps) {
+export default function HeroCarousel({ images, containerClassName = 'h-screen' }: HeroCarouselProps) {
   // 空状态
   if (images.length === 0) {
     return (
-      <div className="relative w-full h-screen overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className={`relative w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 ${containerClassName}`}>
         <div className="relative z-10 w-full h-full flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl md:text-8xl font-extralight tracking-widest mb-4 text-gray-700">
@@ -35,7 +36,7 @@ export default function HeroCarousel({ images }: HeroCarouselProps) {
       autoScrollInterval={5000}
       enableAutoScroll={true}
       transitionType="slide"
-      containerClassName="h-screen"
+      containerClassName={containerClassName}
       showArrows={true}
       showIndicators={true}
       indicatorStyle="bars"
