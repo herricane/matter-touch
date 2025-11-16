@@ -31,7 +31,7 @@ export default async function Home() {
               alt: img.name,
               priority: idx === 0,
             }))}
-            containerClassName="h-[calc(100vh-64px)]"
+            containerClassName="h-[calc(100dvh-64px)]"
           />
         </section>
       )}
