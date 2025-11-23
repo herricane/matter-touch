@@ -56,6 +56,7 @@ export default function ProductImageCarousel({
       indicatorStyle="dots"
       placeholderName={productName || '产品'}
       placeholderTitleSize="md"
+      sizes="(max-width: 1024px) 100vw, 50vw" // 移动端全宽，大屏幕50%宽度
     />
   )
 }

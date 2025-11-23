@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/app/components/Navbar'
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
@@ -45,6 +46,26 @@ export default function AuthErrorPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-white">
+        <Navbar showHomeLink />
+        <div className="pt-32 pb-16 px-6 sm:px-8">
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-4xl font-extralight tracking-wider mb-8 text-black">
+              登录错误
+            </h1>
+            <div className="text-sm text-gray-600">加载中...</div>
+          </div>
+        </div>
+      </main>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }
 

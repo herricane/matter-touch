@@ -54,6 +54,7 @@ interface BaseCarouselProps {
   renderImage?: (image: CarouselImage, index: number, isActive: boolean) => ReactNode // 自定义图片渲染
   placeholderName?: string // 图片加载失败时显示的占位符名称
   placeholderTitleSize?: 'sm' | 'md' | 'lg' // 占位符文字大小
+  sizes?: string // 图片 sizes 属性，用于响应式图片优化
 }
 
 export default function BaseCarousel({
@@ -71,6 +72,7 @@ export default function BaseCarousel({
   renderImage,
   placeholderName,
   placeholderTitleSize = 'md',
+  sizes = '100vw', // 默认全视口宽度
 }: BaseCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [errorMap, setErrorMap] = useState<Record<number, boolean>>({})
@@ -163,7 +165,7 @@ export default function BaseCarousel({
                       src={image.src}
                       alt={image.alt}
                       fill
-                      sizes="100vw"
+                      sizes={sizes}
                       className="object-cover"
                       priority={image.priority || idx === 0}
                       quality={90}
@@ -204,7 +206,7 @@ export default function BaseCarousel({
                     src={image.src}
                     alt={image.alt}
                     fill
-                    sizes="100vw"
+                    sizes={sizes}
                     className="object-cover"
                     priority={image.priority || index === 0}
                     quality={90}

@@ -68,7 +68,8 @@ export default function ProductInfoSection({
         setButtonText('加入购物车')
         setIsSuccess(false)
       } else {
-        // 成功：按钮文字改为"添加成功"，颜色变为绿色
+        // 成功：立即清除 loading 状态，按钮文字改为"添加成功"，颜色变为绿色
+        setLoading(false)
         setButtonText('添加成功')
         setIsSuccess(true)
         // 1.5秒后恢复为"加入购物车"和原颜色
@@ -81,7 +82,6 @@ export default function ProductInfoSection({
       // 错误情况保持原按钮文字和颜色
       setButtonText('加入购物车')
       setIsSuccess(false)
-    } finally {
       setLoading(false)
     }
   }
@@ -181,7 +181,7 @@ export default function ProductInfoSection({
               isSuccess
                 ? 'bg-green-600 border-green-600 text-white hover:bg-green-700'
                 : 'border-black text-black hover:bg-black hover:text-white'
-            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${loading && !isSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <span className="transition-opacity duration-300">{buttonText}</span>
           </button>

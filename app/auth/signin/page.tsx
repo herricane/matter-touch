@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/app/components/Navbar'
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -118,6 +118,26 @@ export default function SignInPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-white">
+        <Navbar showHomeLink />
+        <div className="pt-32 pb-16 px-6 sm:px-8">
+          <div className="max-w-md mx-auto text-center">
+            <div className="text-4xl font-extralight tracking-wider mb-8 text-black">
+              登录
+            </div>
+            <div className="text-sm text-gray-600">加载中...</div>
+          </div>
+        </div>
+      </main>
+    }>
+      <SignInForm />
+    </Suspense>
   )
 }
 
