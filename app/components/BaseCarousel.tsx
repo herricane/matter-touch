@@ -163,6 +163,7 @@ export default function BaseCarousel({
                       src={image.src}
                       alt={image.alt}
                       fill
+                      sizes="100vw"
                       className="object-cover"
                       priority={image.priority || idx === 0}
                       quality={90}
@@ -203,6 +204,7 @@ export default function BaseCarousel({
                     src={image.src}
                     alt={image.alt}
                     fill
+                    sizes="100vw"
                     className="object-cover"
                     priority={image.priority || index === 0}
                     quality={90}

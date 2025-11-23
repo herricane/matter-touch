@@ -23,7 +23,7 @@ model Collection {
 }
 
 model Product {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String
   description   String?
   price         Float?
@@ -40,8 +40,9 @@ model Product {
   colorImages   String?
   collectionId  String
   collection    Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  cartItems     CartItem[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
 model HeroImage {
@@ -51,5 +52,41 @@ model HeroImage {
   order     Int      @default(0) // 排序字段，用于控制显示顺序
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // 加密后的密码
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  cart          Cart?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  selectedColor String? // 用户选择的颜色
+  selectedSize    String? // 用户选择的尺码
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, selectedColor, selectedSize])
 }
 

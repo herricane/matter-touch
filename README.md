@@ -19,6 +19,7 @@ cp .env.local.example .env.local
 
 # 然后编辑 .env.local，填入你的实际配置
 # DATABASE_URL="postgresql://user:pass@localhost:5432/matter_touch?schema=public"
+# NEXTAUTH_SECRET="your-secret-key-here"  # NextAuth.js 密钥，可使用 openssl rand -base64 32 生成
 # SUPABASE_URL="https://xxxxx.supabase.co"  # 可选
 # SUPABASE_SERVICE_ROLE="service-role-key"  # 可选
 ```

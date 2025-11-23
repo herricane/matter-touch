@@ -26,7 +26,7 @@ export default function ImagePlaceholder({
       <div className="text-center text-gray-400">
         <div className={titleSizeClassMap[titleSize]}>
           {name}
-        </div>
+          </div>
       </div>
     </div>
   )

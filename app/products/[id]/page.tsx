@@ -53,6 +53,7 @@ export default async function ProductPage({ params }: PageProps) {
       <section className="pt-32 pb-16 px-6 sm:px-8">
         <div className="max-w-7xl mx-auto">
           <ProductInfoSection
+            productId={product.id}
             name={product.name}
             price={formattedPrice}
             description={product.description || null}

@@ -2,26 +2,32 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 
 interface NavbarProps {
   showHomeLink?: boolean
 }
 
 export default function Navbar({ showHomeLink = false }: NavbarProps) {
+  const { data: session } = useSession()
   const [open, setOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
 
   // 点击外部关闭
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (!open) return
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (open && menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpen(false)
+      }
+      if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open])
+  }, [open, userMenuOpen])
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
@@ -48,6 +54,38 @@ export default function Navbar({ showHomeLink = false }: NavbarProps) {
             <Link href="/#contact" className="text-black hover:opacity-60 transition-opacity">
               联系
             </Link>
+            {session ? (
+              <>
+                <Link href="/cart" className="text-black hover:opacity-60 transition-opacity">
+                  购物车
+                </Link>
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="text-black hover:opacity-60 transition-opacity"
+                  >
+                    {session.user.name || session.user.email}
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-200 shadow-lg">
+                      <button
+                        onClick={() => {
+                          signOut({ callbackUrl: '/' })
+                          setUserMenuOpen(false)
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm font-light tracking-widest uppercase text-black hover:bg-gray-50"
+                      >
+                        退出登录
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <Link href="/auth/signin" className="text-black hover:opacity-60 transition-opacity">
+                登录
+              </Link>
+            )}
           </div>
 
           {/* 移动端汉堡菜单按钮（仅图标） */}
@@ -82,6 +120,26 @@ export default function Navbar({ showHomeLink = false }: NavbarProps) {
           <Link href="/#contact" onClick={() => setOpen(false)} className="px-4 py-2 text-black hover:bg-gray-50">
             联系
           </Link>
+          {session ? (
+            <>
+              <Link href="/cart" onClick={() => setOpen(false)} className="px-4 py-2 text-black hover:bg-gray-50">
+                购物车
+              </Link>
+              <button
+                onClick={() => {
+                  signOut({ callbackUrl: '/' })
+                  setOpen(false)
+                }}
+                className="px-4 py-2 text-left text-black hover:bg-gray-50"
+              >
+                退出登录
+              </button>
+            </>
+          ) : (
+            <Link href="/auth/signin" onClick={() => setOpen(false)} className="px-4 py-2 text-black hover:bg-gray-50">
+              登录
+            </Link>
+          )}
         </nav>
       </div>
     </nav>

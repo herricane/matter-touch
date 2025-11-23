@@ -44,23 +44,23 @@ export default function HeroCarousel({ images, containerClassName = 'h-screen' }
       placeholderTitleSize="lg"
       renderOverlay={() => (
         <>
-          {/* 蒙版层 - 确保文字清晰可见 */}
+      {/* 蒙版层 - 确保文字清晰可见 */}
           <div className="absolute inset-0 bg-black/30 z-[5]"></div>
-          
-          {/* 品牌文字 - 在蒙版上方 */}
+      
+      {/* 品牌文字 - 在蒙版上方 */}
           <div className="absolute inset-0 z-[10] w-full h-full flex items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <div className="text-6xl md:text-8xl font-extralight tracking-widest mb-4 text-white">
-                MATTER
-              </div>
-              <div className="text-6xl md:text-8xl font-extralight tracking-widest text-white">
-                TOUCH
-              </div>
-              <div className="mt-8 text-sm tracking-[0.3em] uppercase text-white/90">
-                个人品牌服饰
-              </div>
-            </div>
+        <div className="text-center">
+          <div className="text-6xl md:text-8xl font-extralight tracking-widest mb-4 text-white">
+            MATTER
           </div>
+          <div className="text-6xl md:text-8xl font-extralight tracking-widest text-white">
+            TOUCH
+          </div>
+          <div className="mt-8 text-sm tracking-[0.3em] uppercase text-white/90">
+            个人品牌服饰
+          </div>
+        </div>
+      </div>
         </>
       )}
     />
