@@ -495,7 +495,7 @@ export default function ProductManagement({ onDataChange }: ProductManagementPro
         </ul>
         {products.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            暂无产品，点击"添加产品"开始创建
+            暂无产品，点击&ldquo;添加产品&rdquo;开始创建
           </div>
         )}
       </div>

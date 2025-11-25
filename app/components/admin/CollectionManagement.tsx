@@ -354,7 +354,7 @@ export default function CollectionManagement({ onDataChange }: CollectionManagem
         </ul>
         {collections.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            暂无系列，点击"添加系列"开始创建
+            暂无系列，点击&ldquo;添加系列&rdquo;开始创建
           </div>
         )}
       </div>
