@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdminApi } from '@/lib/api-admin-auth'
 
 interface RouteParams {
   params: Promise<{
@@ -30,11 +31,14 @@ export async function GET(
   }
 }
 
-// PATCH - 更新产品
+// PATCH - 更新产品（仅管理员）
 export async function PATCH(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const authError = await requireAdminApi()
+  if (authError) return authError
+
   const { id } = await params
   try {
     const body = await request.json()
@@ -109,11 +113,14 @@ export async function PATCH(
   }
 }
 
-// DELETE - 删除产品
+// DELETE - 删除产品（仅管理员）
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const authError = await requireAdminApi()
+  if (authError) return authError
+
   const { id } = await params
   try {
     const product = await prisma.product.findUnique({

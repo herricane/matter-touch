@@ -61,6 +61,7 @@ model User {
   name          String?
   emailVerified DateTime?
   image         String?
+  role          String    @default("user") // "user" 或 "admin"
   cart          Cart?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

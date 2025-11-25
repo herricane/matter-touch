@@ -259,6 +259,52 @@ npm run db:seed      # 开发填充（会清空数据）
 npm run db:init      # 生产初始化（不会清空数据）
 ```
 
+## 管理后台
+
+管理后台使用 NextAuth 进行权限控制，仅允许管理员访问。
+
+### 功能
+
+- **产品管理** (`/admin/products`)：实现产品的增删改查操作
+- **订单管理** (`/admin/orders`)：查看所有订单并更新订单状态（当前为占位页面，后续拓展）
+
+### 测试管理员页面
+
+1. **更新数据库 schema**（如果还未更新）：
+   ```bash
+   npm run db:push
+   ```
+   这会为 `User` 表添加 `role` 字段（默认值为 "user"）。
+
+2. **创建管理员账户**：
+   
+   方法 1：通过数据库直接设置（推荐）
+   - 使用 Prisma Studio：`npm run db:studio`
+   - 找到 `User` 表，将某个用户的 `role` 字段设置为 `"admin"`
+   
+   方法 2：通过 SQL 直接更新
+   ```sql
+   UPDATE "User" SET role = 'admin' WHERE email = 'your-admin-email@example.com';
+   ```
+
+3. **访问管理后台**：
+   - 启动开发服务器：`npm run dev`
+   - 访问 http://localhost:3000/admin
+   - 如果未登录，会自动跳转到登录页面
+   - 使用管理员账户登录后即可访问管理后台
+
+4. **测试产品管理功能**：
+   - 在产品管理页面可以查看所有产品
+   - 点击"添加产品"创建新产品
+   - 点击"编辑"修改现有产品
+   - 点击"删除"删除产品（会弹出确认对话框）
+
+### 权限说明
+
+- 所有产品相关的 API（POST、PATCH、DELETE）都需要管理员权限
+- 非管理员用户尝试访问管理后台会被重定向到登录页
+- 非管理员用户尝试调用管理 API 会返回 401/403 错误
+
 ## 说明
 - 本地：可继续使用 public/images 相对路径；也可配置 Supabase 变量直接使用云存储上传。
 - 生产（Vercel）：数据库与图片均走 Supabase；前端 Image 组件已允许 https 源，无需改动。

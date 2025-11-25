@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdminApi } from '@/lib/api-admin-auth'
 
 // GET - 获取所有产品或按系列筛选
 export async function GET(request: NextRequest) {
@@ -28,8 +29,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - 创建新产品
+// POST - 创建新产品（仅管理员）
 export async function POST(request: NextRequest) {
+  const authError = await requireAdminApi()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const {
